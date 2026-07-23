@@ -64,7 +64,7 @@ service cloud.firestore {
         'otherIncome', 'otherKinds', 'creditChoice', 'decl9', 'decl10',
         'p8', 'p8f',
         'taxCoord', 'taxReason', 'employers', 'coordFile',
-        'signature', 'signDate'
+        'signature', 'signDate', 'declConfirmed'
       ];
     }
 

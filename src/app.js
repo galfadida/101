@@ -38,11 +38,23 @@ var s = {
   otherIncome:"", otherKinds:[], creditChoice:"", decl9:false, decl10:false,
   p8:{}, p8f:{},
   taxCoord:"", taxReason:"", employers:[], coordFile:"",
-  signature:"", signDate:""
+  signature:"", signDate:"", declConfirmed:false
 };
 var stepIdx = 0;
 
 var FRESH = JSON.parse(JSON.stringify(s));
+
+function scrollTop(){
+  // גלילה לראש המסך. מבוצעת מיד וגם בפריים הבא, כדי לגבור על שחזור מיקום
+  // הגלילה של הדפדפן אחרי בנייה מחדש של התוכן.
+  var go = function(){
+    window.scrollTo(0,0);
+    if(document.documentElement) document.documentElement.scrollTop = 0;
+    if(document.body) document.body.scrollTop = 0;
+  };
+  go();
+  if(window.requestAnimationFrame) requestAnimationFrame(go);
+}
 
 function resetAll(){
   try{ localStorage.removeItem(STORE); }catch(e){}
@@ -50,7 +62,7 @@ function resetAll(){
   for(var k in clean) s[k] = clean[k];
   stepIdx = 0; screen = "welcome";
   save(); render();
-  window.scrollTo({top:0,behavior:"instant"});
+  scrollTop();
 }
 
 /* ---------- persistence ----------
@@ -515,7 +527,7 @@ function go(delta){
   }
   if(stepIdx<0) stepIdx=0;
   save(); render();
-  window.scrollTo({top:0,behavior:"instant"});
+  scrollTop();
 }
 
 /* =========================================================
@@ -983,9 +995,21 @@ function buildPart8(host){
 
 /* ---------- signature ---------- */
 function buildSign(host){
-  var d = el("div","declaration");
-  d.textContent = "אני "+G("מצהיר","מצהירה")+" כי הפרטים שמסרתי בטופס זה הינם מלאים ונכונים. ידוע לי שהשמטה או מסירת פרטים לא נכונים הינה עבירה על פקודת מס הכנסה. אני "+G("מתחייב","מתחייבת")+" להודיע למעסיק על כל שינוי שיחול בפרטיי האישיים ובפרטים דלעיל תוך שבוע ימים מתאריך השינוי.";
-  host.appendChild(d);
+  var declText = "אני "+G("מצהיר","מצהירה")+" כי הפרטים שמסרתי בטופס זה הינם מלאים ונכונים. ידוע לי שהשמטה או מסירת פרטים לא נכונים הינה עבירה על פקודת מס הכנסה. אני "+G("מתחייב","מתחייבת")+" להודיע למעסיק על כל שינוי שיחול בפרטיי האישיים ובפרטים דלעיל תוך שבוע ימים מתאריך השינוי.";
+  var dwrap = el("div","field");
+  dwrap.dataset.key = "declConfirmed";
+  var db = el("button","choice sq decl-check"); db.type="button";
+  db.setAttribute("role","checkbox"); db.setAttribute("aria-checked", s.declConfirmed?"true":"false");
+  db.appendChild(el("span","dot"));
+  db.appendChild(el("span","txt", declText));
+  db.onclick = function(){
+    s.declConfirmed = !s.declConfirmed;
+    db.setAttribute("aria-checked", s.declConfirmed?"true":"false");
+    dwrap.classList.remove("bad"); save();
+  };
+  dwrap.appendChild(db);
+  dwrap.appendChild(el("div","err",""));
+  host.appendChild(dwrap);
 
   var f = el("div","field");
   f.dataset.key = "signature";
@@ -1105,6 +1129,7 @@ function collect(st){
     }
   }
   if(st.upload && !s[st.upload.k]) return stepError("נא לצרף את הקובץ כדי להמשיך");
+  if(st.sign && !s.declConfirmed){ return fail(host,"declConfirmed","נא לאשר את ההצהרה לפני הסיום"); }
   if(st.sign && !s.signature){ return fail(host,"signature","נא לחתום לפני הסיום"); }
   return true;
 }
@@ -1117,8 +1142,8 @@ function renderDone(){
   var seal = el("div","seal");
   seal.innerHTML = '<svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>';
   w.appendChild(seal);
-  w.appendChild(el("h1",null,"תודה "+s.firstName+", סיימנו!"));
-  w.appendChild(el("p",null, G("טופס 101 שלך מוכן. שמרנו את כל הפרטים.","טופס 101 שלך מוכן. שמרנו את כל הפרטים.")));
+  w.appendChild(el("h1",null, s.firstName+" "+G("אלוף","אלופה")+", סיימנו! 🎉"));
+  w.appendChild(el("p",null, "טופס ה-101 שלך מוכן ומוכן להורדה."));
 
   if(s.taxCoord==="yes" && s.taxReason==="multi"){
     var warn = el("div","notice warn");
@@ -1230,23 +1255,25 @@ function fireConfetti(){
   var W = window.innerWidth, H = window.innerHeight;
   cv.width = W*dpr; cv.height = H*dpr; ctx.scale(dpr,dpr);
 
-  var colors = ["#6E2F69","#A97A1F","#C77FBE","#E3C46B","#8E4C88","#F0E2C8"];
+  var colors = ["#6E2F69","#C77FBE","#00C8A0","#FFC93C","#FF6B6B","#4D96FF",
+                "#A97A1F","#F038A6","#9B5DE5","#22C55E","#FF8FB1","#FDE047"];
   var bits = [];
-  for(var i=0;i<130;i++){
+  for(var i=0;i<260;i++){
     bits.push({
-      x: W*(0.15+Math.random()*0.7),
-      y: -20 - Math.random()*H*0.5,
-      w: 6+Math.random()*7,
-      h: 9+Math.random()*10,
-      vx: (Math.random()-0.5)*1.7,
-      vy: 2.2+Math.random()*3.2,
+      x: W*(0.05+Math.random()*0.9),
+      y: -20 - Math.random()*H*0.6,
+      w: 7+Math.random()*8,
+      h: 10+Math.random()*12,
+      vx: (Math.random()-0.5)*2.2,
+      vy: 2.4+Math.random()*4,
       rot: Math.random()*Math.PI,
-      vr: (Math.random()-0.5)*0.22,
+      vr: (Math.random()-0.5)*0.28,
       c: colors[(Math.random()*colors.length)|0],
-      sway: Math.random()*Math.PI*2
+      sway: Math.random()*Math.PI*2,
+      round: Math.random()<0.4
     });
   }
-  var start = null, DUR = 3600;
+  var start = null, DUR = 5000;
   function frame(t){
     if(start===null) start = t;
     var elapsed = t-start;
@@ -1264,7 +1291,13 @@ function fireConfetti(){
       ctx.translate(b.x,b.y);
       ctx.rotate(b.rot);
       ctx.fillStyle = b.c;
-      ctx.fillRect(-b.w/2,-b.h/2,b.w,b.h);
+      if(b.round){
+        ctx.beginPath();
+        ctx.arc(0,0,b.w/2,0,Math.PI*2);
+        ctx.fill();
+      } else {
+        ctx.fillRect(-b.w/2,-b.h/2,b.w,b.h);
+      }
       ctx.restore();
     });
     if(elapsed < DUR && alive>0) requestAnimationFrame(frame);
