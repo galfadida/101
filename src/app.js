@@ -447,7 +447,7 @@ var steps = [
    return "יש למסור את אישור תיאום המס מפקיד השומה למשרד. בשלב הבא של המערכת אפשר יהיה לצרף אותו כאן ישירות מהטלפון."; }}},
 
 /* ---------- section: signature ---------- */
-{sec:"הצהרה וחתימה", q:function(){return "כמעט סיימנו!"}, sub:"נא לקרוא ולחתום", sign:true}
+{sec:"הצהרה וחתימה", q:function(){return SEED.firstName+", כמעט סיימנו!"}, sub:"נא לקרוא ולחתום", sign:true}
 ];
 
 function req(x){ return String(x||"").trim() ? "" : "נא למלא שדה זה"; }
@@ -1006,6 +1006,7 @@ function buildSign(host){
     s.declConfirmed = !s.declConfirmed;
     db.setAttribute("aria-checked", s.declConfirmed?"true":"false");
     dwrap.classList.remove("bad"); save();
+    updateSigLock();
   };
   dwrap.appendChild(db);
   dwrap.appendChild(el("div","err",""));
@@ -1018,10 +1019,17 @@ function buildSign(host){
   var cv = document.createElement("canvas");
   wrap.appendChild(cv);
   wrap.appendChild(el("div","sigline"));
-  wrap.appendChild(el("div","sighint","חתמי כאן באצבע או בעכבר"));
+  wrap.appendChild(el("div","sighint",G("חתום כאן באצבע או בעכבר","חתמי כאן באצבע או בעכבר")));
+  var lockNote = el("div","siglock", G("יש לאשר את ההצהרה למעלה כדי לחתום","יש לאשר את ההצהרה למעלה כדי לחתום"));
+  wrap.appendChild(lockNote);
   f.appendChild(wrap);
   f.appendChild(el("div","err",""));
   host.appendChild(f);
+
+  // אזור החתימה נעול עד לאישור ההצהרה
+  function updateSigLock(){
+    wrap.classList.toggle("locked", !s.declConfirmed);
+  }
 
   var actions = el("div","file");
   var clear = el("button","btn btn-soft btn-sm","ניקוי החתימה"); clear.type="button";
@@ -1054,6 +1062,12 @@ function buildSign(host){
   }
   cv.addEventListener("pointerdown",function(e){
     if(!ctx) return;
+    if(!s.declConfirmed){
+      e.preventDefault();
+      dwrap.classList.add("bad");
+      dwrap.scrollIntoView({block:"center",behavior:"smooth"});
+      return;
+    }
     e.preventDefault(); if(cv.setPointerCapture) cv.setPointerCapture(e.pointerId);
     drawing=true; dirty=true; wrap.classList.add("signed");
     last = pos(e); ctx.beginPath(); ctx.moveTo(last.x,last.y);
@@ -1074,7 +1088,7 @@ function buildSign(host){
     ctx.clearRect(0,0,cv.width,cv.height); dirty=false; wrap.classList.remove("signed");
     s.signature=""; save();
   };
-  setTimeout(setup,0);
+  setTimeout(function(){ setup(); updateSigLock(); },0);
 }
 
 /* =========================================================
@@ -1152,76 +1166,6 @@ function renderDone(){
       '<a class="mailto" href="mailto:'+HR_MAIL+'">'+HR_MAIL+"</a>";
     w.appendChild(warn);
   }
-
-  var sum = el("div","summary");
-  function sec(title){ sum.appendChild(el("h2",null,title)); }
-  function row(k,v){ if(v==null||v===""||v===undefined) return;
-    var r=el("div","sumrow"); r.appendChild(el("span",null,k)); r.appendChild(el("b",null,String(v))); sum.appendChild(r); }
-
-  sec("פרטים אישיים");
-  row("שם מלא", s.firstName+" "+s.lastName);
-  row("תעודת זהות", s.idNum);
-  row("תאריך לידה", fmtDate(s.birthDate));
-  row("מגדר", s.gender==="f"?"נקבה":"זכר");
-  if(s.bornIsrael==="no") row("תאריך עלייה", fmtDate(s.aliyaDate));
-  row("כתובת", [s.street,s.houseNo].filter(Boolean).join(" ")+", "+s.city+(s.zip?" "+s.zip:""));
-  row("נייד", s.mobile);
-  row("אימייל", s.email);
-  row("תושב ישראל", s.resident==="yes"?"כן":"לא");
-  row("חבר קיבוץ / מושב שיתופי", {no:"לא",transferred:"כן, ההכנסות מועברות לקיבוץ",not_transferred:"כן, ההכנסות אינן מועברות"}[s.kibbutz]);
-  row("קופת חולים", (s.hmo && s.hmo!=="none") ? s.hmo : "לא רשום/ה");
-
-  sec("מצב משפחתי");
-  row("מצב משפחתי", {single:"רווק/ה",married:"נשוי/אה",divorced:"גרוש/ה",widowed:"אלמן/ה",separated:"פרוד/ה"}[s.marital]);
-  if(s.marital==="married"){
-    row("בן/בת זוג", s.spouseFirst+" "+s.spouseLast);
-    row("ת“ז בן/בת זוג", s.spouseId);
-    row("תאריך לידה", fmtDate(s.spouseBirth));
-    row("הכנסת בן/בת הזוג", {none:"אין הכנסה",work:"עבודה",pension:"קצבה / עסק",other:"הכנסה אחרת"}[s.spouseIncome]);
-  }
-  if(s.marital==="divorced"){
-    row("הורה במשפחה חד הורית", s.singleParentDiv==="yes"?"כן":"לא");
-    row("מזונות", {pay:"משלם/ת",receive:"מקבל/ת",none:"אין"}[s.alimonyDiv]);
-  }
-
-  if(s.hasKids==="yes" && s.kids.length){
-    sec("ילדים");
-    s.kids.forEach(function(k,i){ row(k.name||("ילד/ה "+(i+1)), fmtDate(k.birth)+(k.custody==="yes"?" · בחזקתי":"")); });
-  }
-
-  sec("ההכנסה אצלנו");
-  row("סוג התשלום", s.payType);
-  row("תחילת עבודה", fmtDate(s.startDate));
-
-  sec("הכנסות אחרות");
-  row("הכנסות נוספות", s.otherIncome==="yes" ? s.otherKinds.join(", ") : "אין");
-  if(s.otherIncome==="yes"){
-    row("נקודות זיכוי", s.creditChoice==="here" ? "כנגד ההכנסה אצלנו" : "בהכנסה האחרת");
-  }
-
-  var chosen = PART8.filter(function(p){ return s.p8[p.n]; });
-  sec("פטור וזיכוי ממס");
-  if(!chosen.length) row("סעיפים שסומנו","לא סומנו סעיפים");
-  chosen.forEach(function(p){ row("סעיף "+p.n, p.t.length>60 ? p.t.slice(0,58)+"…" : p.t); });
-
-  sec("תיאום מס");
-  if(s.taxCoord!=="yes") row("תיאום מס","אין");
-  else {
-    row("סיבת הבקשה", {noIncome:"לא הייתה הכנסה קודמת",multi:"הכנסות נוספות ממשכורת",approved:"אישור פקיד שומה מצורף"}[s.taxReason]);
-    s.employers.forEach(function(m,i){ row("מעסיק "+(i+1), m.name+" · "+m.income+" ₪"); });
-    if(s.coordFile) row("קובץ מצורף", s.coordFile);
-  }
-
-  sec("חתימה");
-  row("תאריך", fmtDate(s.signDate || new Date().toISOString().slice(0,10)));
-  if(s.signature){
-    var r = el("div","sumrow");
-    r.appendChild(el("span",null,"חתימה"));
-    var im = document.createElement("img"); im.src=s.signature; im.style.height="46px"; im.alt="חתימה";
-    var holder = el("b"); holder.appendChild(im);
-    r.appendChild(holder); sum.appendChild(r);
-  }
-  w.appendChild(sum);
 
   // הכפתור הראשי — מוביל לשלב הבא: חתימה על חוזה עבודה
   var contractWrap = el("div","nav");
