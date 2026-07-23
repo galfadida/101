@@ -92,7 +92,9 @@ for (const c of CASES) {
     if (/^\d{7}$/.test(zip) || hint.includes("לא הצלחנו")) break;
   }
   if (/^\d{7}$/.test(zip)) found++;
-  console.log(`${(c.street + " " + c.house + ", " + c.city).padEnd(30)} -> ${(zip || "(ריק)").padEnd(9)} ${hint}`);
+  const link = await page.evaluate(() =>
+    document.querySelector('[data-key="zip"] .hint a')?.href || "");
+  console.log(`${(c.street + " " + c.house + ", " + c.city).padEnd(30)} -> ${(zip || "(ריק)").padEnd(9)} ${hint}${link ? "  [" + link + "]" : ""}`);
 }
 
 // הזנה ידנית אחרי כישלון

@@ -477,7 +477,9 @@ function wireZipLookup(wrap){
         if(hint) hint.textContent = "מולא אוטומטית — אפשר לתקן";
         save();
       } else if(!zip){
-        if(hint) hint.textContent = "לא הצלחנו למצוא — נא למלא ידנית";
+        if(hint) hint.innerHTML = 'לא הצלחנו למצוא — ' +
+          '<a class="hint-link" href="https://doar.israelpost.co.il/locatezip" target="_blank" rel="noopener noreferrer">' +
+          'לחיפוש המיקוד באתר דואר ישראל</a>';
       } else if(hint){
         // נמצא מיקוד אך העובד כבר הקליד אחד — לא דורסים, ומחזירים את ההסבר
         hint.textContent = baseHint;
