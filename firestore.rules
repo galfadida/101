@@ -1,0 +1,147 @@
+rules_version = '2';
+
+// =============================================================
+//  שאול תמרוקים — טופס 101
+//  עקרון: אימות אנונימי לבדו אינו מקנה שום הרשאה.
+//  כל גישה דורשת קישור אישי תקף (invite) שנקשר ל-uid (binding).
+// =============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- עזרים ----------
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // מנהל = משתמש מזוהה עם custom claim admin:true (התחברות אימייל/סיסמה, לא אנונימית)
+    function isAdmin() {
+      return signedIn()
+        && request.auth.token.admin == true
+        && request.auth.token.firebase.sign_in_provider != 'anonymous';
+    }
+
+    function bindingDoc() {
+      return get(/databases/$(database)/documents/bindings/$(request.auth.uid)).data;
+    }
+
+    function hasBinding() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/bindings/$(request.auth.uid));
+    }
+
+    function inviteDoc(token) {
+      return get(/databases/$(database)/documents/invites/$(token)).data;
+    }
+
+    function inviteUsable(inv) {
+      return inv.revoked == false
+        && inv.expiresAt > request.time
+        && inv.claimedUid == request.auth.uid;
+    }
+
+    // העובד קשור לרשומה הזו, והקישור שלו עדיין בתוקף ולא בוטל
+    function boundTo(employeeId) {
+      return hasBinding()
+        && bindingDoc().employeeId == employeeId
+        && inviteUsable(inviteDoc(bindingDoc().token));
+    }
+
+    // תנאי לקשירת uid לעובד: מחזיקים token תקף שמצביע בדיוק על אותו עובד
+    function mayBind() {
+      return signedIn()
+        && request.resource.data.keys().hasOnly(['employeeId', 'token', 'boundAt'])
+        && exists(/databases/$(database)/documents/invites/$(request.resource.data.token))
+        && inviteDoc(request.resource.data.token).employeeId == request.resource.data.employeeId
+        && inviteDoc(request.resource.data.token).revoked == false
+        && inviteDoc(request.resource.data.token).expiresAt > request.time
+        && inviteDoc(request.resource.data.token).claimedUid == request.auth.uid;
+    }
+
+    // ---------- קישורים אישיים ----------
+    // מזהה המסמך הוא ה-token עצמו: 32 בתים אקראיים (256 ביט) בקידוד base64url.
+    // get בלבד ולפי מזהה מדויק — list חסום, ולכן אי אפשר לסרוק קישורים.
+    match /invites/{token} {
+      allow get: if signedIn();
+      allow list: if isAdmin();
+
+      allow create, delete: if isAdmin();
+
+      // תפיסה ראשונה של הקישור ע"י המשתמש האנונימי:
+      // מותר לשנות אך ורק claimedUid + claimedAt, פעם אחת, ורק אם הקישור בתוקף.
+      allow update: if isAdmin()
+        || (
+          signedIn()
+          && resource.data.revoked == false
+          && resource.data.expiresAt > request.time
+          && resource.data.claimedUid == null
+          && request.resource.data.claimedUid == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['claimedUid', 'claimedAt'])
+        );
+    }
+
+    // ---------- קשירת uid לעובד ----------
+    match /bindings/{uid} {
+      allow get: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow list: if isAdmin();
+
+      // אפשר לקשור רק אם ה-token כבר נתפס ע"י אותו uid (שלב ה-claim קודם לכך),
+      // הוא בתוקף, לא בוטל, ומצביע בדיוק על אותו עובד.
+      // אי אפשר להזריק employeeId אחר — הוא מושווה למה שכתוב ב-invite.
+      allow create, update: if request.auth.uid == uid && mayBind();
+      allow delete: if isAdmin();
+    }
+
+    // ---------- רשומת העובד (מידע פנימי של המעסיק) ----------
+    // שכר, סטטוס, מזהה מעסיק, הערות — העובד אינו יכול לקרוא או לכתוב.
+    match /employees/{employeeId} {
+      allow read, write: if isAdmin();
+
+      // התת-מסמך היחיד שהעובד רשאי לקרוא: השם, המגדר, הסניף ושם החברה.
+      // כתיבה — למנהל בלבד, ולכן העובד אינו יכול לשנות שם, סניף, חברה או סטטוס.
+      match /public/{docId} {
+        allow get: if isAdmin() || boundTo(employeeId);
+        allow list: if isAdmin();
+        allow write: if isAdmin();
+      }
+
+      // תשובות טופס 101 והחתימה — הנתונים היחידים שהעובד כותב.
+      match /form101/{docId} {
+        allow get: if isAdmin() || boundTo(employeeId);
+        allow list: if isAdmin();
+
+        allow create: if isAdmin()
+          || (
+            boundTo(employeeId)
+            && request.resource.data.keys().hasOnly(
+                 ['answers', 'stepIndex', 'status', 'updatedAt', 'submittedAt'])
+            && request.resource.data.status in ['draft', 'submitted']
+          );
+
+        // אחרי הגשה סופית הטופס ננעל לכתיבה מצד העובד
+        allow update: if isAdmin()
+          || (
+            boundTo(employeeId)
+            && resource.data.status != 'submitted'
+            && request.resource.data.keys().hasOnly(
+                 ['answers', 'stepIndex', 'status', 'updatedAt', 'submittedAt'])
+            && request.resource.data.status in ['draft', 'submitted']
+          );
+
+        allow delete: if isAdmin();
+      }
+
+      // כל תת-אוסף אחר תחת העובד — למנהל בלבד
+      match /{document=**} {
+        allow read, write: if isAdmin();
+      }
+    }
+
+    // ---------- ברירת מחדל: הכול חסום ----------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

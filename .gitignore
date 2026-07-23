@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.firebase/
+*.log
+
+# מפתחות שירות — לעולם לא נכנסים לגיט
+service-account*.json
+*-firebase-adminsdk-*.json
+.env
+.env.*
