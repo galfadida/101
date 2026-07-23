@@ -205,12 +205,12 @@ function dmyToIso(v){
   if(dt.getFullYear()!==y || dt.getMonth()!==mo-1 || dt.getDate()!==d) return "";
   return m[3]+"-"+m[2]+"-"+m[1];
 }
-function maskDate(input, onIso){
+function maskDate(input, onIso, placeholder){
   input.type = "text";
   input.inputMode = "numeric";
   input.autocomplete = "off";
   input.maxLength = 10;
-  input.placeholder = "יום / חודש / שנה";
+  input.placeholder = placeholder || "יום / חודש / שנה";
   input.classList.add("date-in");
   input.addEventListener("input", function(e){
     var back = e.inputType === "deleteContentBackward";
@@ -289,23 +289,24 @@ var steps = [
 {sec:"פרטים אישיים", q:function(){return SEED.firstName+", האם אלו הפרטים שלך? 😊"}, sub:"אפשר לערוך אם צריך",
  fields:[{k:"firstName",l:"שם פרטי",type:"text",half:true,v:req},
          {k:"lastName",l:"שם משפחה",type:"text",half:true,v:req},
-         {k:"mobile",l:"טלפון נייד",type:"tel",mode:"tel",v:function(x){return validMobile(x)?"":"מספר נייד לא תקין (05X-XXXXXXX)"}}]},
+         {k:"mobile",l:"טלפון נייד",type:"tel",mode:"tel",v:function(x){return validMobile(x)?"":"מספר נייד לא תקין (05X-XXXXXXX)"}},
+         {k:"gender",l:"מגדר",type:"gender"}]},
+
+{sec:"פרטים אישיים", q:function(){return "מה כתובת הדוא\"ל שלך? ✉️"}, sub:"לכתובת הזאת יישלחו תלושי השכר שלך",
+ fields:[{k:"email",l:"כתובת דואר אלקטרוני",type:"email",mode:"email",v:function(x){return validEmail(x)?"":"כתובת אימייל לא תקינה"}}]},
 
 {sec:"פרטים אישיים", q:function(){return SEED.firstName+", "+G("הקלד","הקלידי")+" 9 ספרות של תעודת הזהות שלך כולל ספרת ביקורת 😊"}, sub:"",
  fields:[{k:"idNum",l:"מספר תעודת זהות",type:"text",mode:"numeric",max:9,ph:"000000000",
           v:function(x){return validIsraeliId(x)?"":"מספר תעודת זהות לא תקין — נסי לבדוק שוב"}}]},
 
-{sec:"פרטים אישיים", q:function(){return "מתי נולדת?"}, sub:"",
- fields:[{k:"birthDate",l:"תאריך לידה",type:"date",v:function(x){
+{sec:"פרטים אישיים", q:function(){return "מתי נולדת? 🎂"}, sub:"",
+ fields:[{k:"birthDate",l:"תאריך לידה",type:"date",ph:"06/03/1989",v:function(x){
     if(!x) return "נא להקליד תאריך מלא בפורמט יום/חודש/שנה";
     var a = TAX_YEAR - Number(x.split("-")[0]);
     if(a<16) return "גיל מתחת ל-16 — נא לבדוק את התאריך";
     if(a>100) return "התאריך נראה שגוי";
     return "";
   }}]},
-
-{sec:"פרטים אישיים", q:function(){return "מגדר"}, sub:"",
- choice:{k:"gender", opts:[{v:"f",l:"נקבה"},{v:"m",l:"זכר"}]}},
 
 {sec:"פרטים אישיים", q:function(){return "נולדת בישראל?"}, sub:"",
  choice:{k:"bornIsrael", opts:[{v:"yes",l:"כן"},{v:"no",l:"לא, עליתי ארצה"}]}},
@@ -322,9 +323,6 @@ var steps = [
           hint:"נמלא אותו עבורך — אפשר לתקן",
           v:function(x){ return isDigits(x,7) ? "" : "מיקוד הוא 7 ספרות"; }}],
  after:wireZipLookup},
-
-{sec:"פרטים אישיים", q:function(){return "מה כתובת הדוא\"ל שלך?"}, sub:"",
- fields:[{k:"email",l:"כתובת דואר אלקטרוני",type:"email",mode:"email",v:function(x){return validEmail(x)?"":"כתובת אימייל לא תקינה"}}]},
 
 {sec:"סטטוס", q:function(){return G("אתה תושב ישראל?","את תושבת ישראל?")}, sub:"",
  choice:{k:"resident", opts:[{v:"yes",l:"כן"},{v:"no",l:"לא"}]}},
@@ -635,11 +633,28 @@ function mkField(f){
   var lab = el("label",null,f.l);
   lab.htmlFor = "f_"+f.k;
   d.appendChild(lab);
+
+  if(f.type==="gender"){
+    var seg = el("div","seg");
+    (f.opts || [{v:"f",l:"נקבה"},{v:"m",l:"זכר"}]).forEach(function(o){
+      var b = el("button","seg-btn"+(s[f.k]===o.v?" on":""), o.l);
+      b.type="button";
+      b.onclick = function(){
+        s[f.k]=o.v; save();
+        seg.querySelectorAll(".seg-btn").forEach(function(x){x.classList.remove("on")});
+        b.classList.add("on");
+      };
+      seg.appendChild(b);
+    });
+    d.appendChild(seg);
+    return d;
+  }
+
   var i = document.createElement("input");
   i.id = "f_"+f.k;
   if(f.type==="date"){
     i.value = isoToDmy(s[f.k]);
-    maskDate(i, function(iso){ s[f.k]=iso; d.classList.remove("bad"); save(); });
+    maskDate(i, function(iso){ s[f.k]=iso; d.classList.remove("bad"); save(); }, f.ph);
     d.appendChild(i);
     d.appendChild(el("div","err",""));
     return d;
