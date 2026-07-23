@@ -219,14 +219,12 @@ var CFG = {
  *          {ok:false, warn:string}           נראה שגוי (אזהרה בלבד — לא חוסם!)
  */
 export function validate(code, branch, account) {
-  code = normCode(code);
-  var acc = digits(account), br = digits(branch);
-  var cfg = CFG[code];
-  if (!cfg) return { ok: true };                 // בדיקת פורמט בלבד
-  if (acc.length < (cfg.min || 4)) return { ok: true }; // לא מזהירים בזמן הקלדה
-  var ok;
-  try { ok = cfg.fam.check(acc, br); } catch (e) { return { ok: true }; }
-  return ok ? { ok: true } : { ok: false, warn: WARN };
+  // בדיקת ספרת הביקורת מושבתת בכוונה.
+  // האלגוריתמים המתועדים במסמך מס"ב סימנו חשבונות אמיתיים ותקינים
+  // כשגויים (למשל הפועלים 175077 / סניף 748), ואזהרת שווא כזו מבלבלת
+  // ומזיקה יותר מתועלת. נשארת בדיקת פורמט בלבד (בשדות עצמם).
+  // המנוע נשמר (CFG/mkMod11/...) לשימוש עתידי מול חשבונות אמת מאומתים.
+  return { ok: true };
 }
 
 /* ---------- ממשק פנימי לבדיקות (scripts/bank.test.js) ---------- */
