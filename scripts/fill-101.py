@@ -90,6 +90,27 @@ class Form101:
                   fontsize=size, right_to_left=True)
         tw.write_text(page)
 
+    def text_block(self, page_no, x_right, first_baseline, value, size=9,
+                   width=200, leading=10.5, max_lines=3):
+        """טקסט ארוך נשבר לשורות בתוך רוחב התיבה, במקום לגלוש החוצה."""
+        if value in (None, ""):
+            return
+        words = str(value).split()
+        lines, cur = [], ""
+        for w in words:
+            trial = (cur + " " + w).strip()
+            if self.font.text_length(trial, size) <= width or not cur:
+                cur = trial
+            else:
+                lines.append(cur)
+                cur = w
+        if cur:
+            lines.append(cur)
+        lines = lines[:max_lines]
+        for i, line in enumerate(lines):
+            self.text_at(page_no, x_right, first_baseline + i * leading,
+                         line, size, width=width + 40)
+
     def text(self, key, value):
         if key not in TEXT:
             return
@@ -156,10 +177,16 @@ class Form101:
     # ---------- הרכבה ----------
     def build(self, a, tax_year="2026"):
         # חלק א' — המעסיק
-        self.text("employer_name", EMPLOYER["name"])
+        # שם המעסיק ארוך מרוחב התיבה, ולכן נשבר לשתי שורות בתוכה
+        self.text_block(1, 536, 170, EMPLOYER["name"], size=9, width=100, leading=11)
         self.text("employer_address", EMPLOYER["address"])
         self.text("employer_phone", EMPLOYER["phone"])
-        self.comb("employerTaxId", EMPLOYER["taxId"][1:])
+
+        # הספרה 9 מודפסת בטופס בגודל 18 מול שאר הספרות — מכסים ומדפיסים
+        # את כל תשע הספרות באותו גודל, כדי שהשדה ייראה אחיד
+        self.doc[0].draw_rect(fitz.Rect(29.5, 164, 40.5, 187),
+                              color=None, fill=(1, 1, 1), overlay=True)
+        self.comb("employerTaxId", EMPLOYER["taxId"])
         self.comb("taxYear", tax_year)
 
         # חלק ב' — העובד
@@ -228,8 +255,14 @@ class Form101:
             self.text("spouseFirstName", a.get("spouseFirst"))
             self.comb("spouseBirth", dmy(a.get("spouseBirth")))
             self.comb("spouseAliya", dmy(a.get("spouseAliya")))
-            self.tick({"none": "spouse_no_income", "work": "spouse_work",
-                       "pension": "spouse_pension", "other": "spouse_other"}.get(a.get("spouseIncome")))
+            # הטופס מבחין רק בין "אין הכנסה" ל"יש הכנסה", ואז בין
+            # עבודה/קצבה/עסק לבין הכנסה אחרת — לכן מסמנים שתי תיבות
+            si = a.get("spouseIncome")
+            if si == "none":
+                self.tick("spouse_no_income")
+            elif si in ("work", "pension", "other"):
+                self.tick("spouse_has_income")
+                self.tick("spouse_other" if si == "other" else "spouse_work_pension")
 
         # עמוד 2 — חלק ח'
         self.text("idNumPage2", a.get("idNum"))
