@@ -196,7 +196,7 @@ export async function buildForm101(answers, taxYear = String(new Date().getFullY
   tick(a.resident === "yes" ? "resident_yes" : "resident_no");
   tick({ no: "kibbutz_no", transferred: "kibbutz_transferred",
          not_transferred: "kibbutz_not_trans" }[a.kibbutz]);
-  if (a.hmoMember === "yes") { tick("hmo_yes"); text("hmoName", a.hmo); }
+  if (a.hmo && a.hmo !== "none") { tick("hmo_yes"); text("hmoName", a.hmo); }
   else tick("hmo_no");
 
   /* ---------- חלק ג' : ילדים ---------- */

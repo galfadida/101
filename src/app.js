@@ -333,12 +333,8 @@ var steps = [
    {v:"transferred",l:"כן, הכנסותיי ממעסיק זה מועברות לקיבוץ"},
    {v:"not_transferred",l:"כן, הכנסותיי ממעסיק זה אינן מועברות לקיבוץ"}]}},
 
-{sec:"סטטוס", q:function(){return G("אתה חבר בקופת חולים?","את חברה בקופת חולים?")}, sub:"",
- choice:{k:"hmoMember", opts:[{v:"yes",l:"כן"},{v:"no",l:"לא"}]}},
-
-{sec:"סטטוס", q:function(){return "באיזו קופה?"}, sub:"",
- when:function(){return s.hmoMember==="yes"},
- choice:{k:"hmo", opts:HMOS.map(function(h){return {v:h,l:h}})}},
+{sec:"סטטוס", q:function(){return G("באיזו קופת חולים אתה רשום?","באיזו קופת חולים את רשומה?")}, sub:"",
+ choice:{k:"hmo", opts:HMOS.map(function(h){return {v:h,l:h}}).concat([{v:"none",l:G("לא רשום בקופה","לא רשומה בקופה")}])}},
 
 /* ---------- section: family ---------- */
 {sec:"מצב משפחתי", q:function(){return "מה המצב המשפחתי שלך?"}, sub:"",
@@ -1148,7 +1144,7 @@ function renderDone(){
   row("אימייל", s.email);
   row("תושב ישראל", s.resident==="yes"?"כן":"לא");
   row("חבר קיבוץ / מושב שיתופי", {no:"לא",transferred:"כן, ההכנסות מועברות לקיבוץ",not_transferred:"כן, ההכנסות אינן מועברות"}[s.kibbutz]);
-  row("קופת חולים", s.hmoMember==="yes" ? s.hmo : "לא חבר/ה");
+  row("קופת חולים", (s.hmo && s.hmo!=="none") ? s.hmo : "לא רשום/ה");
 
   sec("מצב משפחתי");
   row("מצב משפחתי", {single:"רווק/ה",married:"נשוי/אה",divorced:"גרוש/ה",widowed:"אלמן/ה",separated:"פרוד/ה"}[s.marital]);

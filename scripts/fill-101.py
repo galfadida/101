@@ -211,7 +211,7 @@ class Form101:
         self.tick("resident_yes" if a.get("resident") == "yes" else "resident_no")
         self.tick({"no": "kibbutz_no", "transferred": "kibbutz_transferred",
                    "not_transferred": "kibbutz_not_trans"}.get(a.get("kibbutz")))
-        if a.get("hmoMember") == "yes":
+        if a.get("hmo") and a.get("hmo") != "none":
             self.tick("hmo_yes")
             self.text("hmoName", a.get("hmo"))
         else:
