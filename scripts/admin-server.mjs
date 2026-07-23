@@ -34,7 +34,7 @@ function readBody(req) {
   });
 }
 
-async function createEmployee({ firstName, lastName, gender, branch, mobile, days }) {
+async function createEmployee({ firstName, lastName, gender, branch, mobile, hourlyWage, days }) {
   const empRef = db.collection("employees").doc();
   const token = randomBytes(32).toString("base64url");
   const expiresAt = Timestamp.fromMillis(Date.now() + (Number(days) || 14) * 864e5);
@@ -46,8 +46,12 @@ async function createEmployee({ firstName, lastName, gender, branch, mobile, day
     mobile: (mobile || "").trim(),
     company: COMPANY,
   };
+  // שכר שעתי — מידע פנימי של המעסיק לשלב חוזה העבודה.
+  // נשמר על רשומת העובד בלבד, שהעובד אינו יכול לקרוא. לא נכנס ל-public/profile.
+  const wage = String(hourlyWage ?? "").replace(/[^\d.]/g, "");
+  const internal = { hourlyWage: wage ? Number(wage) : null };
   await db.batch()
-    .set(empRef, { ...profile, status: "invited", createdAt: FieldValue.serverTimestamp() })
+    .set(empRef, { ...profile, ...internal, status: "invited", createdAt: FieldValue.serverTimestamp() })
     .set(empRef.collection("public").doc("profile"), profile)
     .set(db.collection("invites").doc(token), {
       employeeId: empRef.id, revoked: false, expiresAt, claimedUid: null, claimedAt: null,
@@ -56,7 +60,8 @@ async function createEmployee({ firstName, lastName, gender, branch, mobile, day
     .commit();
   const link = `${SITE}/?t=${token}`;
   const qr = await QRCode.toDataURL(link, { width: 260, margin: 1, color: { dark: "#2B2330", light: "#ffffff" } });
-  return { employeeId: empRef.id, token, link, qr, expiresAt: expiresAt.toDate().toISOString(), profile };
+  return { employeeId: empRef.id, token, link, qr, expiresAt: expiresAt.toDate().toISOString(),
+           profile, hourlyWage: internal.hourlyWage };
 }
 
 async function listInvites() {
