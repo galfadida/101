@@ -609,7 +609,9 @@ var steps = [
  fields:[{k:"city",l:"יישוב",combo:"city",v:req,ph:"הקלדה לחיפוש…",hint:"מתוך רשימת היישובים הרשמית"},
          {k:"street",l:"רחוב",combo:"street",v:req,grow:true,ph:"הקלדה לחיפוש…"},
          {k:"houseNo",l:"מספר",type:"text",mode:"numeric",v:req,narrow:true},
-         {k:"zip",l:"מיקוד (לא חובה)",type:"text",mode:"numeric",max:7}]},
+         {k:"zip",l:"מיקוד",type:"text",mode:"numeric",max:7,ph:"7 ספרות",
+          hint:"אפשר לבדוק באתר דואר ישראל",
+          v:function(x){ return isDigits(x,7) ? "" : "מיקוד הוא 7 ספרות"; }}]},
 
 {sec:"פרטים אישיים", q:function(){return "איך אפשר להשיג אותך?"}, sub:"הנייד הגיע מהמעסיק — אפשר לתקן",
  fields:[{k:"mobile",l:"טלפון נייד",type:"tel",mode:"tel",v:function(x){return validMobile(x)?"":"מספר נייד לא תקין (05X-XXXXXXX)"}},
@@ -902,6 +904,7 @@ function mkField(f){
   i.addEventListener("input",function(){ s[f.k]=i.value; d.classList.remove("bad"); save(); });
   i.addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); go(1); } });
   d.appendChild(i);
+  if(f.hint) d.appendChild(el("div","hint",f.hint));
   d.appendChild(el("div","err",""));
   return d;
 }
