@@ -60,7 +60,7 @@ body{
   direction:rtl;
   background:var(--bg);
   color:var(--ink);
-  font-family:"Assistant","Heebo","Rubik","Noto Sans Hebrew","Arial Hebrew","Segoe UI",system-ui,-apple-system,sans-serif;
+  font-family:"Rubik","Assistant","Heebo","Noto Sans Hebrew","Arial Hebrew","Segoe UI",system-ui,-apple-system,sans-serif;
   font-size:17px;
   line-height:1.55;
   -webkit-text-size-adjust:100%;

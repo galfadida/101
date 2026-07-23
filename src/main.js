@@ -1,3 +1,4 @@
+import "./assets/fonts/rubik-local.css";
 import "./styles.css";
 import { startApp } from "./app.js";
 import { LOGO } from "./logo.js";
