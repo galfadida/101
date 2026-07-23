@@ -168,6 +168,10 @@ input::placeholder{color:var(--muted)}
 .choice .txt{flex:1;min-width:0}
 .choice .txt small{display:block;color:var(--muted);font-size:14px;margin-top:2px}
 
+.step-error{display:none;background:var(--danger-soft);border:1px solid var(--danger);color:var(--danger);
+  border-radius:11px;padding:12px 15px;font-size:16px;font-weight:600;margin-top:18px;line-height:1.45}
+.step-error.show{display:block}
+
 /* ---------- nav ---------- */
 .nav{display:flex;gap:10px;margin-top:28px;align-items:center}
 .btn{border:0;border-radius:12px;padding:15px 22px;font-size:17px;font-weight:600;cursor:pointer;
@@ -839,6 +843,9 @@ function renderStep(){
   bt.classList.toggle("show", stepIdx>0);
   bt.onclick = function(){ go(-1); };
 
+  stepErrBox = el("div","step-error");
+  wrap.appendChild(stepErrBox);
+
   var nav = el("div","nav");
   if(stepIdx>0){
     var back = el("button","btn btn-back","חזרה");
@@ -1286,14 +1293,26 @@ function buildSign(host){
 /* =========================================================
    validation on "next"
    ========================================================= */
+var stepErrBox = null;
+function stepError(msg){
+  if(stepErrBox){
+    stepErrBox.textContent = msg;
+    stepErrBox.classList.add("show");
+    stepErrBox.scrollIntoView({block:"center",behavior:"smooth"});
+  }
+  return false;
+}
+function clearStepError(){ if(stepErrBox) stepErrBox.classList.remove("show"); }
+
 function fail(host,key,msg){
   var node = host ? host.querySelector('[data-key="'+key+'"]') : null;
   if(node){ node.classList.add("bad"); var e=node.querySelector(".err"); if(e) e.textContent=msg; node.scrollIntoView({block:"center",behavior:"smooth"}); }
-  else { alert(msg); }
+  else { return stepError(msg); }
   return false;
 }
 function collect(st){
   var host = main;
+  clearStepError();
   if(st.fields){
     for(var i=0;i<st.fields.length;i++){
       var f = st.fields[i];
@@ -1302,26 +1321,27 @@ function collect(st){
       if(msg) return fail(host,f.k,msg);
     }
   }
-  if(st.choice && !s[st.choice.k]) { alert("נא לבחור אחת מהאפשרויות"); return false; }
-  if(st.multi && s[st.multi.k].length===0){ alert("נא לבחור לפחות אפשרות אחת"); return false; }
+  if(st.choice && !s[st.choice.k]) return stepError("נא לבחור אחת מהאפשרויות כדי להמשיך");
+  if(st.multi && s[st.multi.k].length===0) return stepError("נא לבחור לפחות אפשרות אחת כדי להמשיך");
   if(st.kids){
-    if(!s.kids.length){ alert("נא להוסיף לפחות ילד/ה אחד/ת, או לחזור אחורה ולסמן שאין ילדים"); return false; }
+    if(!s.kids.length) return stepError("נא להוסיף ילד/ה, או לחזור אחורה ולסמן שאין ילדים");
     for(var j=0;j<s.kids.length;j++){
       var k = s.kids[j];
-      if(!k.name.trim() || !k.birth){ alert("נא להשלים שם ותאריך לידה לילד/ה "+(j+1)); return false; }
-      if(k.id && !validIsraeliId(k.id)){ alert("מספר תעודת זהות לא תקין לילד/ה "+(j+1)); return false; }
+      var who = s.kids.length>1 ? "לילד/ה "+(j+1) : "";
+      if(!k.name.trim()) return stepError("נא למלא שם "+who);
+      if(!k.birth) return stepError("נא למלא תאריך לידה מלא "+who);
+      if(k.id && !validIsraeliId(k.id)) return stepError("מספר תעודת זהות לא תקין "+who);
     }
   }
   if(st.employers){
-    if(!s.employers.length){ alert("נא להוסיף לפחות מעסיק אחד"); return false; }
+    if(!s.employers.length) return stepError("נא להוסיף מעסיק, או לחזור אחורה ולבחור סיבה אחרת");
     for(var m=0;m<s.employers.length;m++){
       var e2 = s.employers[m];
-      if(!e2.name.trim() || !e2.address.trim() || !e2.taxFile.trim() || !e2.kind || !e2.income || !e2.tax){
-        alert("נא להשלים את כל השדות של מעסיק "+(m+1)); return false;
-      }
+      if(!e2.name.trim() || !e2.address.trim() || !e2.taxFile.trim() || !e2.kind || !e2.income || !e2.tax)
+        return stepError("נא להשלים את כל השדות של מעסיק "+(m+1));
     }
   }
-  if(st.upload && !s[st.upload.k]){ alert("נא לצרף את הקובץ"); return false; }
+  if(st.upload && !s[st.upload.k]) return stepError("נא לצרף את הקובץ כדי להמשיך");
   if(st.sign && !s.signature){ return fail(host,"signature","נא לחתום לפני הסיום"); }
   return true;
 }
