@@ -247,8 +247,8 @@ input::placeholder{color:var(--muted)}
 .sigline{position:absolute;bottom:38px;right:22px;left:22px;border-bottom:1px dashed var(--line-2);pointer-events:none}
 .sighint{position:absolute;bottom:14px;right:22px;font-size:14px;color:var(--muted);pointer-events:none}
 .sigwrap.signed .sigline,.sigwrap.signed .sighint{display:none}
-.declaration{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:16px;
-  font-size:16px;line-height:1.6;color:var(--ink-2)}
+.declaration{background:var(--danger-soft);border:1px solid var(--danger);border-radius:12px;padding:16px;
+  font-size:16px;line-height:1.6;color:var(--danger);font-weight:600}
 
 /* ---------- done ---------- */
 .done{text-align:center;padding:20px 0}
@@ -735,7 +735,7 @@ var steps = [
  upload:{k:"coordFile", l:"צירוף אישור תיאום מס"}},
 
 /* ---------- section: signature ---------- */
-{sec:"הצהרה וחתימה", q:function(){return "כמעט סיימנו"}, sub:"נא לקרוא ולחתום", sign:true}
+{sec:"הצהרה וחתימה", q:function(){return "כמעט סיימנו!"}, sub:"נא לקרוא ולחתום", sign:true}
 ];
 
 function req(x){ return String(x||"").trim() ? "" : "נא למלא שדה זה"; }
