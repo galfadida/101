@@ -1,6 +1,7 @@
 import { ADDR_BLOB } from "./addr.js";
 import { LOGO } from "./logo.js";
 import { lookupZip } from "./geocode.js";
+import { BANKS, bankByCode, bankLabel, bankFromLabel, validate as validateBank } from "./bank.js";
 
 /* =========================================================
    פרטי העובד — מגיעים מ-employees/{id}/public/profile ב-Firestore.
@@ -30,6 +31,7 @@ var s = {
   gender:SEED.gender, bornIsrael:"", aliyaDate:"",
   street:"", houseNo:"", city:"", zip:"",
   mobile:SEED.mobile, phone:"", email:"",
+  bankHolder:"", bankCode:"", bankBranch:"", bankAccount:"",
   resident:"", kibbutz:"", hmoMember:"", hmo:"",
   marital:"", singleParentDiv:"", alimonyDiv:"",
   spouseId:"", spouseLast:"", spouseFirst:"", spouseBirth:"", spouseAliya:"", spouseIncome:"",
@@ -307,6 +309,20 @@ var steps = [
 {sec:"פרטים אישיים", q:function(){return "מה כתובת הדוא\"ל שלך? ✉️"}, sub:"לכתובת הזאת יישלחו תלושי השכר שלך",
  fields:[{k:"email",l:"כתובת דואר אלקטרוני",type:"email",mode:"email",v:function(x){return validEmail(x)?"":"כתובת אימייל לא תקינה"}}]},
 
+{sec:"פרטי חשבון בנק", q:function(){return "לאיזה חשבון בנק להעביר את המשכורת? 🏦"}, sub:"הפרטים ישמשו להעברת שכר בלבד",
+ fields:[
+   {k:"bankHolder",l:"שם בעל החשבון",type:"text",v:req,
+    prefill:function(){return (s.firstName+" "+s.lastName).trim();},
+    hint:"ברירת המחדל היא שמך — אפשר לשנות אם החשבון על שם מישהו אחר"},
+   {k:"bankCode",l:"בנק",bank:true,v:function(x){return String(x||"").trim()?"":"נא לבחור בנק מהרשימה";},
+    ph:"הקלדה לחיפוש בנק…"},
+   {k:"bankBranch",l:"מספר סניף",type:"text",mode:"numeric",max:3,half:true,ph:"עד 3 ספרות",
+    v:function(x){return /^\d{1,3}$/.test(x)?"":"מספר סניף — עד 3 ספרות";}},
+   {k:"bankAccount",l:"מספר חשבון",type:"text",mode:"numeric",max:9,half:true,ph:"עד 9 ספרות",
+    v:function(x){return /^\d{1,9}$/.test(x)?"":"מספר חשבון — עד 9 ספרות";}}
+ ],
+ after:wireBankWarn},
+
 {sec:"פרטים אישיים", q:function(){return SEED.firstName+", "+G("הקלד","הקלידי")+" 9 ספרות של תעודת הזהות שלך כולל ספרת ביקורת 😊"}, sub:"",
  fields:[{k:"idNum",l:"מספר תעודת זהות",type:"text",mode:"numeric",max:9,ph:"000000000",
           v:function(x){return validIsraeliId(x)?"":"מספר תעודת זהות לא תקין — נסי לבדוק שוב"}}]},
@@ -505,6 +521,36 @@ function wireZipLookup(wrap){
   if(s.city && s.street && s.houseNo && !s.zip) setTimeout(tryLookup, 250);
 }
 
+/* ---------- אזהרה רכה על מספר חשבון בנק ---------- */
+function wireBankWarn(wrap){
+  var accField = wrap.querySelector('[data-key="bankAccount"]');
+  if(!accField) return;
+  var warnEl = el("div","bank-warn");
+  accField.appendChild(warnEl);
+
+  function refresh(){
+    warnEl.classList.remove("show");
+    warnEl.textContent = "";
+    if(!s.bankCode) return;
+    var acc = String(s.bankAccount||"").replace(/\D/g,"");
+    var br  = String(s.bankBranch||"").replace(/\D/g,"");
+    if(acc.length < 4 || !br) return;            // לא מזהירים בזמן הקלדה
+    var res = validateBank(s.bankCode, br, acc);
+    if(res && res.warn){
+      warnEl.textContent = res.warn;
+      warnEl.classList.add("show");
+    }
+  }
+
+  ["bankBranch","bankAccount","bankCode"].forEach(function(k){
+    var inp = wrap.querySelector('[data-key="'+k+'"] input');
+    if(!inp) return;
+    inp.addEventListener("input", refresh);
+    inp.addEventListener("blur", function(){ setTimeout(refresh, 160); });
+  });
+  setTimeout(refresh, 300);
+}
+
 /* =========================================================
    navigation
    ========================================================= */
@@ -667,6 +713,23 @@ function mkField(f){
     d.appendChild(el("div","err",""));
     return d;
   }
+  if(f.bank){
+    i.type = "text";
+    i.autocomplete = "off";
+    i.value = bankLabel(s[f.k]);
+    i.placeholder = f.ph || "הקלדה לחיפוש בנק…";
+    d.appendChild(makeCombo(i,
+      function(){ return BANKS.map(function(b){ return b.code+" "+b.name; }); },
+      function(v){
+        var found = bankFromLabel(v);
+        s[f.k] = found ? found.code : "";
+        d.classList.remove("bad");
+        save();
+      }));
+    if(f.hint) d.appendChild(el("div","hint",f.hint));
+    d.appendChild(el("div","err",""));
+    return d;
+  }
   if(f.combo){
     i.type = "text";
     i.value = esc(s[f.k]);
@@ -689,6 +752,7 @@ function mkField(f){
     return d;
   }
   i.type = f.type||"text";
+  if(f.prefill && !String(s[f.k]||"").trim()){ s[f.k] = f.prefill(); }
   i.value = esc(s[f.k]);
   if(f.mode) i.inputMode = f.mode;
   if(f.max) i.maxLength = f.max;

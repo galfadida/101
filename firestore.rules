@@ -56,6 +56,7 @@ service cloud.firestore {
         'bornIsrael', 'aliyaDate',
         'street', 'houseNo', 'city', 'zip',
         'mobile', 'phone', 'email',
+        'bankHolder', 'bankCode', 'bankBranch', 'bankAccount',
         'resident', 'kibbutz', 'hmoMember', 'hmo',
         'marital', 'singleParentDiv', 'alimonyDiv',
         'spouseId', 'spouseLast', 'spouseFirst', 'spouseBirth', 'spouseAliya', 'spouseIncome',

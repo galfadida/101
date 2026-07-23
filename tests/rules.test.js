@@ -169,6 +169,12 @@ describe("5ב · answers מוגבל לשדות טופס 101 בלבד", () => {
       p8: { "1": true }, p8f: { "14_from": "2010-01-01" }, signature: "data:image/png;base64,AAA",
     }));
   });
+  it("שדות פרטי חשבון בנק מתקבלים", async () => {
+    await assertSucceeds(put({
+      idNum: "301138541", firstName: "גל", lastName: "פדידה",
+      bankHolder: "גל פדידה", bankCode: "12", bankBranch: "175", bankAccount: "611140",
+    }));
+  });
   it("שדה שרירותי ב-answers נדחה", async () => {
     await assertFails(put({ idNum: "301138541", isManager: true }));
   });

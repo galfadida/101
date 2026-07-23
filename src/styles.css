@@ -154,6 +154,11 @@ input::placeholder{color:var(--muted)}
 .err{font-size:14px;color:var(--danger);font-weight:600;display:none}
 .field.bad input,.field.bad select{border-color:var(--danger)}
 .field.bad .err{display:block}
+.bank-warn{display:none;margin-top:8px;padding:10px 12px;border-radius:10px;
+  background:var(--gold-soft);border:1px solid var(--gold);color:var(--ink);
+  font-size:15px;font-weight:600;line-height:1.45}
+.bank-warn::before{content:"⚠️ ";}
+.bank-warn.show{display:block}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media (max-width:400px){.row2{grid-template-columns:1fr}}
 .row-addr{display:grid;grid-template-columns:2fr 1fr;gap:12px}
