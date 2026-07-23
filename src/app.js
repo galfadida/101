@@ -1142,8 +1142,8 @@ function renderDone(){
   var seal = el("div","seal");
   seal.innerHTML = '<svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>';
   w.appendChild(seal);
-  w.appendChild(el("h1",null, s.firstName+" "+G("אלוף","אלופה")+", סיימנו! 🎉"));
-  w.appendChild(el("p",null, "טופס ה-101 שלך מוכן ומוכן להורדה."));
+  w.appendChild(el("h1",null, "כל הכבוד "+s.firstName+"! 🎉"));
+  w.appendChild(el("p",null, "סיימת למלא טופס 101."));
 
   if(s.taxCoord==="yes" && s.taxReason==="multi"){
     var warn = el("div","notice warn");
@@ -1223,24 +1223,59 @@ function renderDone(){
   }
   w.appendChild(sum);
 
-  var pdfActions = el("div","nav");
-  var view = el("button","btn btn-primary","צפייה בטופס 101");
-  view.onclick = function(){ openPdf(view); };
-  pdfActions.appendChild(view);
-  w.appendChild(pdfActions);
+  // הכפתור הראשי — מוביל לשלב הבא: חתימה על חוזה עבודה
+  var contractWrap = el("div","nav");
+  var contract = el("button","btn btn-primary btn-next","חתימה על חוזה עבודה ✍️");
+  contract.type="button";
+  contract.onclick = function(){ goToContract(w); };
+  contractWrap.appendChild(contract);
+  w.appendChild(contractWrap);
 
-  var dlWrap = el("div","nav");
-  var dl = el("button","btn btn-back","הורדת הטופס");
+  var pdfActions = el("div","nav");
+  var view = el("button","btn btn-soft","צפייה בטופס 101");
+  view.type="button";
+  view.onclick = function(){ openPdf(view); };
+  var dl = el("button","btn btn-soft","הורדת הטופס");
   dl.type="button";
   dl.onclick = function(){ downloadPdf(dl); };
-  dlWrap.appendChild(dl);
+  pdfActions.appendChild(view); pdfActions.appendChild(dl);
+  w.appendChild(pdfActions);
+
+  var backWrap = el("div","nav");
   var back = el("button","btn btn-ghost","חזרה לעריכה");
   back.onclick = function(){ screen="form"; render(); };
-  dlWrap.appendChild(back);
-  w.appendChild(dlWrap);
+  backWrap.appendChild(back);
+  w.appendChild(backWrap);
 
   main.appendChild(w);
   setTimeout(fireConfetti, 220);
+}
+
+/* ---------- שלב הבא: חוזה עבודה (בבנייה) ---------- */
+function goToContract(){
+  topbar.classList.add("hidden");
+  main.innerHTML = "";
+  var w = el("section","done step-anim");
+  var seal = el("div","seal");
+  seal.innerHTML = '<svg viewBox="0 0 24 24"><path d="M9 12h6M9 16h6M9 8h6M6 3h9l3 3v15H6z"/></svg>';
+  w.appendChild(seal);
+  w.appendChild(el("h1",null,"חוזה עבודה"));
+  w.appendChild(el("p",null, "מעולה "+s.firstName+", זה השלב הבא — חתימה על חוזה העבודה שלך בשאול תמרוקים."));
+
+  var note = el("div","notice info");
+  note.style.marginTop="18px";
+  note.textContent = "השלב הזה בבנייה ויתווסף בקרוב.";
+  w.appendChild(note);
+
+  var nav = el("div","nav");
+  var back = el("button","btn btn-primary","חזרה");
+  back.type="button";
+  back.onclick = function(){ render(); };
+  nav.appendChild(back);
+  w.appendChild(nav);
+
+  main.appendChild(w);
+  window.scrollTo(0,0);
 }
 
 /* ---------- confetti ---------- */
