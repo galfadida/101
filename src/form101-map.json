@@ -1,0 +1,598 @@
+{
+ "text": {
+  "employer_name": {
+   "page": 1,
+   "xRight": 536,
+   "baseline": 170,
+   "size": 9
+  },
+  "employer_address": {
+   "page": 1,
+   "xRight": 388,
+   "baseline": 178,
+   "size": 9
+  },
+  "employer_phone": {
+   "page": 1,
+   "xRight": 186,
+   "baseline": 178,
+   "size": 9
+  },
+  "lastName": {
+   "page": 1,
+   "xRight": 408,
+   "baseline": 232,
+   "size": 10
+  },
+  "firstName": {
+   "page": 1,
+   "xRight": 298,
+   "baseline": 232,
+   "size": 10
+  },
+  "passport": {
+   "page": 1,
+   "xRight": 540,
+   "baseline": 253,
+   "size": 9
+  },
+  "street": {
+   "page": 1,
+   "xRight": 372,
+   "baseline": 253,
+   "size": 10
+  },
+  "houseNo": {
+   "page": 1,
+   "xRight": 222,
+   "baseline": 253,
+   "size": 10
+  },
+  "city": {
+   "page": 1,
+   "xRight": 178,
+   "baseline": 253,
+   "size": 10
+  },
+  "hmoName": {
+   "page": 1,
+   "xRight": 66,
+   "baseline": 300,
+   "size": 9
+  },
+  "email": {
+   "page": 1,
+   "xRight": 500,
+   "baseline": 326,
+   "size": 9
+  },
+  "phone": {
+   "page": 1,
+   "xRight": 350,
+   "baseline": 326,
+   "size": 9
+  },
+  "mobile": {
+   "page": 1,
+   "xRight": 205,
+   "baseline": 326,
+   "size": 9
+  },
+  "spouseLastName": {
+   "page": 1,
+   "xRight": 408,
+   "baseline": 707,
+   "size": 10
+  },
+  "spouseFirstName": {
+   "page": 1,
+   "xRight": 298,
+   "baseline": 707,
+   "size": 10
+  },
+  "idNumPage2": {
+   "page": 2,
+   "xRight": 148,
+   "baseline": 24,
+   "size": 10
+  },
+  "sign_date": {
+   "page": 2,
+   "xRight": 222,
+   "baseline": 652,
+   "size": 10
+  }
+ },
+ "width": {
+  "employer_name": 128,
+  "employer_address": 210,
+  "employer_phone": 78,
+  "lastName": 100,
+  "firstName": 110,
+  "passport": 100,
+  "street": 170,
+  "houseNo": 42,
+  "city": 88,
+  "hmoName": 45,
+  "email": 155,
+  "phone": 140,
+  "mobile": 95,
+  "spouseLastName": 100,
+  "spouseFirstName": 110,
+  "idNumPage2": 90,
+  "sign_date": 90
+ },
+ "comb": {
+  "taxYear": {
+   "page": 1,
+   "x0": 228.5,
+   "pitch": 16.25,
+   "baseline": 99,
+   "count": 4,
+   "size": 10
+  },
+  "employerTaxId": {
+   "page": 1,
+   "x0": 36.5,
+   "pitch": 11.3,
+   "baseline": 183,
+   "count": 9,
+   "size": 10
+  },
+  "aliyaDate": {
+   "page": 1,
+   "x0": 34.3,
+   "pitch": 11.36,
+   "baseline": 237,
+   "count": 8,
+   "size": 10
+  },
+  "birthDate": {
+   "page": 1,
+   "x0": 125.0,
+   "pitch": 11.34,
+   "baseline": 237,
+   "count": 8,
+   "size": 10
+  },
+  "idNum": {
+   "page": 1,
+   "x0": 443.8,
+   "pitch": 11.34,
+   "baseline": 237,
+   "count": 9,
+   "size": 10
+  },
+  "zip": {
+   "page": 1,
+   "x0": 34.6,
+   "pitch": 11.36,
+   "baseline": 258,
+   "count": 7,
+   "size": 9
+  },
+  "startDate": {
+   "page": 1,
+   "x0": 36.5,
+   "pitch": 11.34,
+   "baseline": 391,
+   "count": 8,
+   "size": 10
+  },
+  "spouseAliya": {
+   "page": 1,
+   "x0": 34.3,
+   "pitch": 11.36,
+   "baseline": 711,
+   "count": 8,
+   "size": 10
+  },
+  "spouseBirth": {
+   "page": 1,
+   "x0": 125.0,
+   "pitch": 11.34,
+   "baseline": 711,
+   "count": 8,
+   "size": 10
+  },
+  "spouseId": {
+   "page": 1,
+   "x0": 443.8,
+   "pitch": 11.34,
+   "baseline": 711,
+   "count": 9,
+   "size": 10
+  }
+ },
+ "box": {
+  "gender_m": {
+   "page": 1,
+   "x": 528.4,
+   "y": 279.1
+  },
+  "gender_f": {
+   "page": 1,
+   "x": 528.4,
+   "y": 292.1
+  },
+  "marital_single": {
+   "page": 1,
+   "x": 489.3,
+   "y": 277.9
+  },
+  "marital_married": {
+   "page": 1,
+   "x": 430.2,
+   "y": 277.9
+  },
+  "marital_divorced": {
+   "page": 1,
+   "x": 362.9,
+   "y": 277.9
+  },
+  "marital_widowed": {
+   "page": 1,
+   "x": 489.3,
+   "y": 290.9
+  },
+  "marital_separated": {
+   "page": 1,
+   "x": 442.5,
+   "y": 290.9
+  },
+  "resident_yes": {
+   "page": 1,
+   "x": 309.7,
+   "y": 278.9
+  },
+  "resident_no": {
+   "page": 1,
+   "x": 309.7,
+   "y": 291.9
+  },
+  "kibbutz_no": {
+   "page": 1,
+   "x": 270.6,
+   "y": 279.1
+  },
+  "kibbutz_transferred": {
+   "page": 1,
+   "x": 248.6,
+   "y": 279.9
+  },
+  "kibbutz_not_trans": {
+   "page": 1,
+   "x": 270.6,
+   "y": 292.1
+  },
+  "hmo_no": {
+   "page": 1,
+   "x": 123.2,
+   "y": 277.2
+  },
+  "hmo_yes": {
+   "page": 1,
+   "x": 123.2,
+   "y": 290.2
+  },
+  "pay_monthly": {
+   "page": 1,
+   "x": 238.2,
+   "y": 357.1
+  },
+  "pay_extra_job": {
+   "page": 1,
+   "x": 238.2,
+   "y": 369.1
+  },
+  "pay_partial": {
+   "page": 1,
+   "x": 238.2,
+   "y": 381.1
+  },
+  "pay_daily": {
+   "page": 1,
+   "x": 238.2,
+   "y": 393.1
+  },
+  "pay_pension": {
+   "page": 1,
+   "x": 238.2,
+   "y": 405.1
+  },
+  "pay_grant": {
+   "page": 1,
+   "x": 238.2,
+   "y": 417.1
+  },
+  "other_none": {
+   "page": 1,
+   "x": 236.5,
+   "y": 453.9
+  },
+  "other_yes": {
+   "page": 1,
+   "x": 236.5,
+   "y": 478.3
+  },
+  "other_monthly": {
+   "page": 1,
+   "x": 236.5,
+   "y": 490.2
+  },
+  "other_daily": {
+   "page": 1,
+   "x": 118.6,
+   "y": 490.2
+  },
+  "other_extra_job": {
+   "page": 1,
+   "x": 236.5,
+   "y": 501.2
+  },
+  "other_pension": {
+   "page": 1,
+   "x": 118.6,
+   "y": 501.2
+  },
+  "other_partial": {
+   "page": 1,
+   "x": 236.5,
+   "y": 512.2
+  },
+  "other_grant": {
+   "page": 1,
+   "x": 118.6,
+   "y": 512.2
+  },
+  "credit_here": {
+   "page": 1,
+   "x": 235.5,
+   "y": 535.8
+  },
+  "credit_other": {
+   "page": 1,
+   "x": 235.5,
+   "y": 559.2
+  },
+  "decl9": {
+   "page": 1,
+   "x": 235.6,
+   "y": 583.4
+  },
+  "decl10": {
+   "page": 1,
+   "x": 235.5,
+   "y": 617.7
+  },
+  "spouse_no_income": {
+   "page": 1,
+   "x": 409.8,
+   "y": 715.7
+  },
+  "spouse_has_income": {
+   "page": 1,
+   "x": 282.4,
+   "y": 715.7
+  },
+  "spouse_work_pension": {
+   "page": 1,
+   "x": 160.1,
+   "y": 717.2
+  },
+  "spouse_other": {
+   "page": 1,
+   "x": 80.7,
+   "y": 717.2
+  },
+  "p8_1": {
+   "page": 2,
+   "x": 510.7,
+   "y": 39.4
+  },
+  "p8_2א": {
+   "page": 2,
+   "x": 510.7,
+   "y": 54.7
+  },
+  "p8_2ב": {
+   "page": 2,
+   "x": 510.7,
+   "y": 77.1
+  },
+  "p8_3": {
+   "page": 2,
+   "x": 510.7,
+   "y": 94.9
+  },
+  "p8_4": {
+   "page": 2,
+   "x": 511.7,
+   "y": 121.5
+  },
+  "p8_5": {
+   "page": 2,
+   "x": 510.7,
+   "y": 161.0
+  },
+  "p8_6": {
+   "page": 2,
+   "x": 510.7,
+   "y": 183.4
+  },
+  "p8_7": {
+   "page": 2,
+   "x": 510.7,
+   "y": 206.9
+  },
+  "p8_8": {
+   "page": 2,
+   "x": 510.7,
+   "y": 265.5
+  },
+  "p8_9": {
+   "page": 2,
+   "x": 510.7,
+   "y": 315.0
+  },
+  "p8_10": {
+   "page": 2,
+   "x": 510.7,
+   "y": 333.0
+  },
+  "p8_11": {
+   "page": 2,
+   "x": 510.6,
+   "y": 357.9
+  },
+  "p8_12": {
+   "page": 2,
+   "x": 510.7,
+   "y": 380.7
+  },
+  "p8_13": {
+   "page": 2,
+   "x": 510.7,
+   "y": 397.1
+  },
+  "p8_14": {
+   "page": 2,
+   "x": 510.7,
+   "y": 412.1
+  },
+  "p8_15": {
+   "page": 2,
+   "x": 510.7,
+   "y": 436.2
+  },
+  "p8_16": {
+   "page": 2,
+   "x": 510.7,
+   "y": 449.5
+  },
+  "coord_no_income": {
+   "page": 2,
+   "x": 512.4,
+   "y": 479.5
+  },
+  "coord_multi": {
+   "page": 2,
+   "x": 512.4,
+   "y": 508.4
+  },
+  "coord_approved": {
+   "page": 2,
+   "x": 512.4,
+   "y": 589.0
+  }
+ },
+ "kids": {
+  "birth_x0": 262.0,
+  "birth_pitch": 11.34,
+  "id_x0": 352.6,
+  "id_pitch": 11.35,
+  "name_right": 516,
+  "col2_x": 519.5,
+  "col1_x": 529.5
+ },
+ "kidsFirstBaseline": 402.0,
+ "kidsRowH": 21.85,
+ "p8Fields": {
+  "3_since": {
+   "x": 328.0,
+   "baseline": 105.0,
+   "align": "r"
+  },
+  "3_town": {
+   "x": 436.0,
+   "baseline": 118.4,
+   "align": "r"
+  },
+  "4_aliya": {
+   "x": 404.0,
+   "baseline": 132.4,
+   "align": "r"
+  },
+  "4_noIncomeUntil": {
+   "x": 247.0,
+   "baseline": 146.4,
+   "align": "r"
+  },
+  "11_count": {
+   "x": 457.5,
+   "baseline": 365.8,
+   "align": "c"
+  },
+  "14_from": {
+   "x": 246.0,
+   "baseline": 421.7,
+   "align": "r"
+  },
+  "14_to": {
+   "x": 115.0,
+   "baseline": 422.7,
+   "align": "r"
+  },
+  "16_days": {
+   "x": 351.0,
+   "baseline": 459.0,
+   "align": "c"
+  }
+ },
+ "kidCounts": {
+  "7": {
+   "born": [
+    380.1,
+    239.8
+   ],
+   "upTo2": [
+    291.3,
+    251.7
+   ],
+   "three": [
+    335.6,
+    262.3
+   ],
+   "f4to5": [
+    55.3,
+    240.8
+   ],
+   "s6to17": [
+    51.3,
+    250.7
+   ],
+   "e18": [
+    89.7,
+    262.3
+   ]
+  },
+  "8": {
+   "born": [
+    380.1,
+    287.4
+   ],
+   "upTo2": [
+    291.3,
+    299.2
+   ],
+   "three": [
+    335.6,
+    309.8
+   ],
+   "f4to5": [
+    55.3,
+    288.3
+   ],
+   "s6to17": [
+    51.3,
+    298.2
+   ]
+  }
+ },
+ "signatureRect": [
+  46,
+  637,
+  112,
+  653
+ ]
+}

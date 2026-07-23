@@ -1191,18 +1191,21 @@ function renderDone(){
   }
   w.appendChild(sum);
 
-  var nav = el("div","nav");
+  var pdfActions = el("div","nav");
+  var view = el("button","btn btn-primary","צפייה בטופס 101");
+  view.onclick = function(){ openPdf(view); };
+  pdfActions.appendChild(view);
+  w.appendChild(pdfActions);
+
+  var dlWrap = el("div","nav");
+  var dl = el("button","btn btn-back","הורדת הטופס");
+  dl.type="button";
+  dl.onclick = function(){ downloadPdf(dl); };
+  dlWrap.appendChild(dl);
   var back = el("button","btn btn-ghost","חזרה לעריכה");
   back.onclick = function(){ screen="form"; render(); };
-  var dl = el("button","btn btn-primary","הורדת סיכום");
-  dl.onclick = downloadSummary;
-  nav.appendChild(back); nav.appendChild(dl);
-  w.appendChild(nav);
-
-  var note = el("div","meta-note");
-  note.style.marginTop="20px";
-  note.innerHTML = "<b>שלב הבא בפיתוח:</b> הפקת קובץ ה-PDF הרשמי של טופס 101 עם כל הפרטים האלה, ושמירה בתיקיית העובד.";
-  w.appendChild(note);
+  dlWrap.appendChild(back);
+  w.appendChild(dlWrap);
 
   main.appendChild(w);
   setTimeout(fireConfetti, 220);
@@ -1261,6 +1264,59 @@ function fireConfetti(){
     else cv.remove();
   }
   requestAnimationFrame(frame);
+}
+
+/* ---------- הפקת ה-PDF ---------- */
+var pdfBlobCache = null;
+function pdfFileName(){ return "טופס101_"+s.firstName+"_"+s.lastName+".pdf"; }
+
+function buildAnswers(){
+  var out = {};
+  for(var k in s){ out[k] = s[k]; }
+  return out;
+}
+
+function makePdfBlob(){
+  if(pdfBlobCache) return Promise.resolve(pdfBlobCache);
+  return import("./pdf.js").then(function(mod){
+    return mod.form101Blob(buildAnswers(), String(TAX_YEAR));
+  }).then(function(blob){
+    pdfBlobCache = blob;
+    return blob;
+  });
+}
+
+function withBusy(btn, label, fn){
+  var orig = btn.textContent;
+  btn.disabled = true; btn.textContent = label;
+  return fn().catch(function(e){
+    console.error("pdf error", e);
+    alert("שגיאה בהפקת הטופס. נסי שוב.");
+  }).finally(function(){
+    btn.disabled = false; btn.textContent = orig;
+  });
+}
+
+function openPdf(btn){
+  return withBusy(btn, "מכינים…", function(){
+    return makePdfBlob().then(function(blob){
+      var url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener");
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
+    });
+  });
+}
+
+function downloadPdf(btn){
+  return withBusy(btn, "מכינים…", function(){
+    return makePdfBlob().then(function(blob){
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url; a.download = pdfFileName();
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+    });
+  });
 }
 
 function downloadSummary(){
