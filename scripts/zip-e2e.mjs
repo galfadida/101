@@ -57,7 +57,11 @@ const results = [];
 try {
   await page.goto(`${SITE}/?t=${token}`, { waitUntil: "networkidle2", timeout: 45000 });
 
-  // ה-token אמור להיעלם משורת הכתובת
+  // ה-token אמור להיעלם משורת הכתובת מיד אחרי שהאימות מסתיים
+  // ממתינים לסיום האימות (מסך הפתיחה עם השם), ולא למסך הביניים "רגע…"
+  await page.waitForFunction(
+    () => document.querySelector("main .nav .btn-primary")?.textContent?.includes("מתחילים"),
+    { timeout: 25000 });
   const urlAfter = page.url();
   console.log("\nURL אחרי טעינה:", urlAfter);
   console.log("token הוסר מה-URL:", !urlAfter.includes(token) ? "כן ✔" : "לא ✘");

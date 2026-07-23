@@ -10,7 +10,7 @@ import { initializeApp, cert } from "firebase-admin/app";
 import { getFirestore, Timestamp, FieldValue } from "firebase-admin/firestore";
 
 const KEY_PATH = process.env.SA_KEY || "./service-account.json";
-const BASE_URL = process.env.FORM_BASE_URL || "http://localhost:5173";
+const BASE_URL = process.env.FORM_BASE_URL || "https://shaul-tamrukim-tofes-101.web.app";
 const COMPANY = 'שאול בטיש הלוי שאול תמרוקים בע"מ';
 const DAYS = 14;
 
