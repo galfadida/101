@@ -40,9 +40,13 @@ const DUMMY = {
   spouseFirst: "יוסי",
   spouseLast: "כהן",
   spouseBirth: "05071989",
+  // גילאים מגוונים כדי לכסות את כל קבוצות הגיל שבסעיפים 7 ו-8
   kids: [
-    { name: "נועם", id: makeId("21234567"), birth: "14022019" },
-    { name: "שירה", id: makeId("31234567"), birth: "03092023" },
+    { name: "נועם", id: makeId("21234567"), birth: "14022019", custody: true },   // 7
+    { name: "שירה", id: makeId("31234567"), birth: "03092023", custody: true },   // 3
+    { name: "איתי", id: makeId("41234567"), birth: "20012026", custody: true },   // נולד השנה
+    { name: "תמר",  id: makeId("51234567"), birth: "11062024", custody: true },   // 2
+    { name: "יובל", id: makeId("61234567"), birth: "05032021", custody: false },  // 5, לא בחזקתי
   ],
   otherEmployer: { name: "מאפיית הבוקר בע\"מ", address: "הרצל 12, ירושלים", taxFile: "912345678", income: "3200", tax: "410" },
 };
@@ -147,6 +151,10 @@ for (let guard = 0; guard < 40; guard++) {
         const ins = card.querySelectorAll("input");
         const set = (el, v) => { el.value = v; el.dispatchEvent(new Event("input", { bubbles: true })); };
         set(ins[0], kid.name); set(ins[1], kid.id); set(ins[2], kid.birth);
+        if (!kid.custody) {
+          const toggles = card.querySelectorAll('.choice[role="checkbox"]');
+          toggles[0]?.click();          // "הילד/ה נמצא/ת בחזקתי"
+        }
       }, i, k);
       await wait(200);
     }
@@ -167,12 +175,30 @@ for (let guard = 0; guard < 40; guard++) {
     await wait(200); await next();
   }
   else if (h.includes("פטור או זיכוי")) {
+    // מסמנים סעיפים שיש להם שדות המשך, כדי לבדוק גם אותם
     await page.evaluate(() => {
-      const items = [...document.querySelectorAll(".legal .choice")];
-      const want = ["13", "15"];
-      items.forEach((el) => { if (want.includes(el.querySelector(".num")?.textContent)) el.click(); });
+      const want = ["3", "4", "7", "8", "11", "13", "14", "15", "16"];
+      [...document.querySelectorAll(".legal .choice")].forEach((el) => {
+        if (want.includes(el.querySelector(".num")?.textContent)) el.click();
+      });
     });
-    await wait(300); await next();
+    await wait(500);
+    await page.evaluate((v) => {
+      const set = (el, val) => { el.value = val; el.dispatchEvent(new Event("input", { bubbles: true })); };
+      // כל תיבה מסומנת פותחת מתחתיה את שדות ההמשך שלה, לפי הסדר
+      const blocks = [...document.querySelectorAll(".legal .subfields")];
+      blocks.forEach((blk) => {
+        const label = blk.previousElementSibling?.querySelector(".num")?.textContent;
+        const ins = [...blk.querySelectorAll("input")];
+        if (label === "3") { set(ins[0], v.residentSince); set(ins[1], v.town); }
+        if (label === "4") { set(ins[0], v.aliya); set(ins[1], v.noIncomeUntil); }
+        if (label === "11") { set(ins[0], "1"); }
+        if (label === "14") { set(ins[0], v.serviceFrom); set(ins[1], v.serviceTo); }
+        if (label === "16") { set(ins[0], "32"); }
+      });
+    }, { residentSince: "01092020", town: "מצפה רמון", aliya: "15082001",
+         noIncomeUntil: "31032026", serviceFrom: "12112010", serviceTo: "10112012" });
+    await wait(400); await next();
   }
   else if (h.includes("תיאום מס?")) { await choose("כן, יש לי"); }
   else if (h.includes("סיבת הבקשה")) { await choose("יש לי הכנסות נוספות ממשכורת"); }

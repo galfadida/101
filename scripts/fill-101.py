@@ -10,7 +10,7 @@ employees/{id}/form101/current  ->  { answers, taxYear }
 import base64, io, json, os, re, sys
 import fitz
 from form101_map import (TEXT, WIDTH, COMB, BOX, KIDS, KIDS_FIRST_BASELINE,
-                         KIDS_ROW_H, SIGNATURE_RECT)
+                         KIDS_ROW_H, SIGNATURE_RECT, P8_FIELDS, KID_COUNTS)
 
 BLANK = os.environ.get("FORM_101_BLANK", r"C:\Users\גל\Desktop\tofes-101.pdf")
 FONT_DIR = r"C:\Windows\Fonts"
@@ -35,6 +35,37 @@ def dmy(iso):
         return ""
     y, m, d = str(iso).split("-")[:3]
     return f"{d}{m}{y}"
+
+
+def dmy_slash(iso):
+    s = dmy(iso)
+    return f"{s[:2]}/{s[2:4]}/{s[4:]}" if s else ""
+
+
+def kid_counts(kids, in_custody, tax_year):
+    """ספירת ילדים לפי קבוצות הגיל שבסעיפים 7 ו-8, מתוך תאריכי הלידה."""
+    out = {"born": 0, "upTo2": 0, "three": 0, "f4to5": 0, "s6to17": 0, "e18": 0}
+    for k in kids or []:
+        mine = k.get("custody") == "yes"
+        if mine != bool(in_custody):
+            continue
+        birth = str(k.get("birth") or "")
+        if "-" not in birth:
+            continue
+        age = int(tax_year) - int(birth.split("-")[0])
+        if age == 0:
+            out["born"] += 1
+        elif 1 <= age <= 2:
+            out["upTo2"] += 1
+        elif age == 3:
+            out["three"] += 1
+        elif 4 <= age <= 5:
+            out["f4to5"] += 1
+        elif 6 <= age <= 17:
+            out["s6to17"] += 1
+        elif age == 18:
+            out["e18"] += 1
+    return out
 
 
 class Form101:
@@ -202,9 +233,38 @@ class Form101:
 
         # עמוד 2 — חלק ח'
         self.text("idNumPage2", a.get("idNum"))
-        for num, on in (a.get("p8") or {}).items():
+        p8 = a.get("p8") or {}
+        p8f = a.get("p8f") or {}
+        for num, on in p8.items():
             if on:
                 self.tick("p8_" + str(num))
+
+        # שדות ההמשך של הסעיפים
+        date_keys = {"3_since", "4_aliya", "4_noIncomeUntil", "14_from", "14_to"}
+        for key, (x, baseline, align) in P8_FIELDS.items():
+            clause = key.split("_")[0]
+            if not p8.get(clause):
+                continue
+            raw = p8f.get(key)
+            if raw in (None, ""):
+                continue
+            value = dmy_slash(raw) if key in date_keys else str(raw)
+            if align == "c":
+                w = self.font.text_length(value, 10)
+                self.text_at(2, x + w / 2, baseline, value, 10, width=60)
+            else:
+                self.text_at(2, x, baseline, value, 10, width=110)
+
+        # ספירת הילדים לפי גיל, סעיפים 7 ו-8
+        for clause, spots in KID_COUNTS.items():
+            if not p8.get(str(clause)):
+                continue
+            counts = kid_counts(a.get("kids"), clause == 7, tax_year)
+            for bucket, (x, baseline) in spots.items():
+                n = counts.get(bucket, 0)
+                if n:
+                    w = self.font.text_length(str(n), 10)
+                    self.text_at(2, x + w / 2, baseline, str(n), 10, width=40)
 
         # חלק ט' — תיאום מס
         if a.get("taxCoord") == "yes":
