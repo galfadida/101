@@ -81,6 +81,17 @@ export async function lookupZip(city, street, houseNo) {
       zip = zipFrom(r);
       if (zip) break;
     }
+
+    // בישראל גוגל לרוב אינה מחזירה מיקוד בחיפוש לפי כתובת, אך כן מחזירה
+    // אותו בחיפוש הפוך לפי הקואורדינטות של אותה תוצאה. זה מכפיל את שיעור ההצלחה.
+    if (!zip && results?.[0]?.geometry?.location) {
+      const rev = await geocoder.geocode({ location: results[0].geometry.location });
+      for (const r of rev.results || []) {
+        zip = zipFrom(r);
+        if (zip) break;
+      }
+    }
+
     cache[key] = zip;
     writeCache(cache);
     return zip;

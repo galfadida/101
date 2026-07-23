@@ -457,7 +457,11 @@ function wireZipLookup(wrap){
   var lastTried = "";
   var manual = false;
 
-  zipInput.addEventListener("input", function(){ manual = true; if(hint) hint.textContent = baseHint; });
+  // "ידני" נכון רק כל עוד יש ערך. שדה שרוקן חוזר להשלמה אוטומטית.
+  zipInput.addEventListener("input", function(){
+    manual = zipInput.value.trim() !== "";
+    if(hint) hint.textContent = baseHint;
+  });
 
   function tryLookup(){
     if(manual && s.zip) return;
@@ -474,6 +478,9 @@ function wireZipLookup(wrap){
         save();
       } else if(!zip){
         if(hint) hint.textContent = "לא הצלחנו למצוא — נא למלא ידנית";
+      } else if(hint){
+        // נמצא מיקוד אך העובד כבר הקליד אחד — לא דורסים, ומחזירים את ההסבר
+        hint.textContent = baseHint;
       }
     });
   }
