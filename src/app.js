@@ -309,17 +309,17 @@ var steps = [
 {sec:"פרטים אישיים", q:function(){return "מה כתובת הדוא\"ל שלך? ✉️"}, sub:"לכתובת הזאת יישלחו תלושי השכר שלך",
  fields:[{k:"email",l:"כתובת דואר אלקטרוני",type:"email",mode:"email",v:function(x){return validEmail(x)?"":"כתובת אימייל לא תקינה"}}]},
 
-{sec:"פרטי חשבון בנק", q:function(){return "לאיזה חשבון בנק להעביר את המשכורת? 🏦"}, sub:"הפרטים ישמשו להעברת שכר בלבד",
+{sec:"פרטי חשבון בנק", q:function(){return "לאיזה חשבון בנק להעביר את המשכורת? 💰"}, sub:"הפרטים ישמשו להעברת שכר בלבד",
  fields:[
    {k:"bankHolder",l:"שם בעל החשבון",type:"text",v:req,
     prefill:function(){return (s.firstName+" "+s.lastName).trim();},
     hint:"ברירת המחדל היא שמך — אפשר לשנות אם החשבון על שם מישהו אחר"},
    {k:"bankCode",l:"בנק",bank:true,v:function(x){return String(x||"").trim()?"":"נא לבחור בנק מהרשימה";},
     ph:"הקלדה לחיפוש בנק…"},
-   {k:"bankBranch",l:"מספר סניף",type:"text",mode:"numeric",max:3,half:true,ph:"עד 3 ספרות",
-    v:function(x){return /^\d{1,3}$/.test(x)?"":"מספר סניף — עד 3 ספרות";}},
-   {k:"bankAccount",l:"מספר חשבון",type:"text",mode:"numeric",max:9,half:true,ph:"עד 9 ספרות",
-    v:function(x){return /^\d{1,9}$/.test(x)?"":"מספר חשבון — עד 9 ספרות";}}
+   {k:"bankBranch",l:"מספר סניף",type:"text",mode:"numeric",max:3,half:true,ph:"3 ספרות",
+    v:function(x){return /^\d{3}$/.test(x)?"":"מספר הסניף חייב להיות 3 ספרות";}},
+   {k:"bankAccount",l:"מספר חשבון",type:"text",mode:"numeric",max:9,half:true,ph:"4 עד 9 ספרות",
+    v:function(x){return /^\d{4,9}$/.test(x)?"":"מספר החשבון חייב להיות בין 4 ל-9 ספרות";}}
  ],
  after:wireBankWarn},
 
@@ -438,16 +438,18 @@ var steps = [
  flags:[{k:"decl9",l:"אין מפרישים עבורי לקרן השתלמות בגין הכנסתי האחרת, או שכל הפרשות המעסיק לקרן השתלמות בגין הכנסתי האחרת מצורפות להכנסתי האחרת."},
         {k:"decl10",l:"אין מפרישים עבורי לקצבה / לביטוח אובדן כושר עבודה / פיצויים בגין הכנסתי האחרת, או שכל הפרשות המעסיק לקצבה / לביטוח אובדן כושר עבודה / פיצויים בגין הכנסתי האחרת מצורפות להכנסתי האחרת."}]},
 
-/* ---------- section: part 8 ---------- */
-{sec:"פטור וזיכוי ממס", q:function(){return G("אני מבקש פטור או זיכוי ממס מהסיבות הבאות","אני מבקשת פטור או זיכוי ממס מהסיבות הבאות")},
- sub:"סמני כל סעיף שנכון לגבייך. הנוסח מופיע כלשונו בטופס הרשמי.", part8:true},
-
-/* ---------- section: tax coordination ---------- */
+/* ---------- section: tax coordination (מיד אחרי ההכנסות הנוספות) ---------- */
 {sec:"תיאום מס", q:function(){return "יש לך תיאום מס?"}, sub:"לא חובה — אפשר להמשיך גם בלי",
  when:function(){return s.otherIncome==="yes"},
- choice:{k:"taxCoord", opts:[{v:"yes",l:"כן, יש לי"},{v:"no",l:"אין לי תיאום מס"}]},
+ choice:{k:"taxCoord", opts:[{v:"yes",l:"כן, יש לי"},{v:"no",l:"אין לי תיאום מס"}]}},
+
+{sec:"תיאום מס", q:function(){return "שים לב 🔴"}, sub:"",
+ when:function(){return s.otherIncome==="yes" && s.taxCoord==="no"},
  notice:{kind:"warn", html:function(){
-   return "<b>"+G("שים לב","שימי לב")+"</b> — אם לא יסופק אישור תיאום מס עד המשכורת הקרובה, יירדו <b>47% מס</b> מהמשכורת."; }}},
+   return "מכיוון שיש לך הכנסה נוספת ואין אישור תיאום מס, "+
+     "<b>אם לא יסופק אישור תיאום מס עד המשכורת הקרובה — יירדו 47% מס מהמשכורת</b>. "+
+     "מומלץ להסדיר תיאום מס בהקדם ולשלוח אותו לכתובת: " +
+     '<a class="mailto" href="mailto:'+HR_MAIL+'">'+HR_MAIL+"</a>"; }}},
 
 {sec:"תיאום מס", q:function(){return "מה סיבת הבקשה?"}, sub:"",
  when:function(){return s.otherIncome==="yes" && s.taxCoord==="yes"},
@@ -459,9 +461,13 @@ var steps = [
 {sec:"תיאום מס", q:function(){return "פירוט ההכנסות הנוספות"}, sub:"בנוסף להכנסה ממעסיק זה · עד 3 מעסיקים",
  when:function(){return s.otherIncome==="yes" && s.taxCoord==="yes" && s.taxReason==="multi"}, employers:true},
 
-{sec:"תיאום מס", q:function(){return "אישור תיאום המס"}, sub:"צילום או קובץ PDF של האישור מפקיד השומה",
- when:function(){return s.otherIncome==="yes" && s.taxCoord==="yes" && s.taxReason==="approved"},
- upload:{k:"coordFile", l:"צירוף אישור תיאום מס"}},
+{sec:"תיאום מס", q:function(){return "העלאת אישור תיאום המס"}, sub:"צילום או קובץ PDF של האישור מפקיד השומה — לא חובה, אפשר גם בהמשך",
+ when:function(){return s.otherIncome==="yes" && s.taxCoord==="yes"},
+ upload:{k:"coordFile", l:"צירוף אישור תיאום מס", optional:true}},
+
+/* ---------- section: part 8 ---------- */
+{sec:"פטור וזיכוי ממס", q:function(){return G("אני מבקש פטור או זיכוי ממס מהסיבות הבאות","אני מבקשת פטור או זיכוי ממס מהסיבות הבאות")},
+ sub:"סמני כל סעיף שנכון לגבייך. הנוסח מופיע כלשונו בטופס הרשמי.", part8:true},
 
 /* ---------- section: signature ---------- */
 {sec:"הצהרה וחתימה", q:function(){return SEED.firstName+", כמעט סיימנו!"}, sub:"נא לקרוא ולחתום", sign:true}
@@ -1207,7 +1213,7 @@ function collect(st){
         return stepError("נא להשלים את כל השדות של מעסיק "+(m+1));
     }
   }
-  if(st.upload && !s[st.upload.k]) return stepError("נא לצרף את הקובץ כדי להמשיך");
+  if(st.upload && !st.upload.optional && !s[st.upload.k]) return stepError("נא לצרף את הקובץ כדי להמשיך");
   if(st.sign && !s.declConfirmed){ return fail(host,"declConfirmed","נא לאשר את ההצהרה לפני הסיום"); }
   if(st.sign && !s.signature){ return fail(host,"signature","נא לחתום לפני הסיום"); }
   return true;
@@ -1224,10 +1230,10 @@ function renderDone(){
   w.appendChild(el("h1",null, "כל הכבוד "+s.firstName+"! 🎉"));
   w.appendChild(el("p",null, "סיימת למלא טופס 101, כעת נעבור למלא את חוזה העבודה שלך. ממשיכים!"));
 
-  if(s.taxCoord==="yes" && s.taxReason==="multi"){
+  if(s.otherIncome==="yes" && s.taxCoord==="no"){
     var warn = el("div","notice warn");
-    warn.innerHTML = "<b>חשוב לפעול בהקדם:</b> אם לא "+G("תעביר","תעבירי")+" אישור תיאום מס לפני המשכורת הראשונה שלך בשאול תמרוקים, "+
-      "ינוכו לך <b>47% מס</b>. יש לשלוח את טופס תיאום המס בהקדם לכתובת: " +
+    warn.innerHTML = "<b>חשוב לפעול בהקדם:</b> אין לך אישור תיאום מס. אם לא "+G("תעביר","תעבירי")+" אישור לפני המשכורת הראשונה שלך בשאול תמרוקים, "+
+      "ינוכו לך <b>47% מס</b>. יש להסדיר תיאום מס ולשלוח אותו בהקדם לכתובת: " +
       '<a class="mailto" href="mailto:'+HR_MAIL+'">'+HR_MAIL+"</a>";
     w.appendChild(warn);
   }
@@ -1246,12 +1252,6 @@ function renderDone(){
   dl.onclick = function(){ downloadPdf(dl); };
   pdfActions.appendChild(dl);
   w.appendChild(pdfActions);
-
-  var backWrap = el("div","nav");
-  var back = el("button","btn btn-ghost","חזרה לעריכה");
-  back.onclick = function(){ screen="form"; render(); };
-  backWrap.appendChild(back);
-  w.appendChild(backWrap);
 
   main.appendChild(w);
   setTimeout(fireConfetti, 220);
