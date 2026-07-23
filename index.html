@@ -700,7 +700,7 @@ var steps = [
  when:function(){return s.otherIncome==="yes"},
  multi:{k:"otherKinds", opts:PAY_TYPES.map(function(p){return {v:p,l:p}})}},
 
-{sec:"הכנסות אחרות", q:function(){return "איפה נלקחות נקודות הזיכוי שלך?"}, sub:"",
+{sec:"הכנסות אחרות", q:function(){return "מה לעשות עם נקודות הזיכוי שלך?"}, sub:"",
  when:function(){return s.otherIncome==="yes"},
  choice:{k:"creditChoice", opts:[
    {v:"here",l:G("אבקש לקבל נקודות זיכוי ומדרגות מס כנגד הכנסתי זו. איני מקבל אותן בהכנסה אחרת.","אבקש לקבל נקודות זיכוי ומדרגות מס כנגד הכנסתי זו. איני מקבלת אותן בהכנסה אחרת.")},
