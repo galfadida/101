@@ -445,7 +445,9 @@ var steps = [
 /* ---------- section: tax coordination ---------- */
 {sec:"תיאום מס", q:function(){return "יש לך תיאום מס?"}, sub:"לא חובה — אפשר להמשיך גם בלי",
  when:function(){return s.otherIncome==="yes"},
- choice:{k:"taxCoord", opts:[{v:"yes",l:"כן, יש לי"},{v:"no",l:"אין לי תיאום מס"}]}},
+ choice:{k:"taxCoord", opts:[{v:"yes",l:"כן, יש לי"},{v:"no",l:"אין לי תיאום מס"}]},
+ notice:{kind:"warn", html:function(){
+   return "<b>"+G("שים לב","שימי לב")+"</b> — אם לא יסופק אישור תיאום מס עד המשכורת הקרובה, יירדו <b>47% מס</b> מהמשכורת."; }}},
 
 {sec:"תיאום מס", q:function(){return "מה סיבת הבקשה?"}, sub:"",
  when:function(){return s.otherIncome==="yes" && s.taxCoord==="yes"},
@@ -457,10 +459,9 @@ var steps = [
 {sec:"תיאום מס", q:function(){return "פירוט ההכנסות הנוספות"}, sub:"בנוסף להכנסה ממעסיק זה · עד 3 מעסיקים",
  when:function(){return s.otherIncome==="yes" && s.taxCoord==="yes" && s.taxReason==="multi"}, employers:true},
 
-{sec:"תיאום מס", q:function(){return "אישור תיאום המס"}, sub:"",
+{sec:"תיאום מס", q:function(){return "אישור תיאום המס"}, sub:"צילום או קובץ PDF של האישור מפקיד השומה",
  when:function(){return s.otherIncome==="yes" && s.taxCoord==="yes" && s.taxReason==="approved"},
- notice:{kind:"info", html:function(){
-   return "יש למסור את אישור תיאום המס מפקיד השומה למשרד. בשלב הבא של המערכת אפשר יהיה לצרף אותו כאן ישירות מהטלפון."; }}},
+ upload:{k:"coordFile", l:"צירוף אישור תיאום מס"}},
 
 /* ---------- section: signature ---------- */
 {sec:"הצהרה וחתימה", q:function(){return SEED.firstName+", כמעט סיימנו!"}, sub:"נא לקרוא ולחתום", sign:true}
@@ -1221,7 +1222,7 @@ function renderDone(){
   seal.innerHTML = '<svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>';
   w.appendChild(seal);
   w.appendChild(el("h1",null, "כל הכבוד "+s.firstName+"! 🎉"));
-  w.appendChild(el("p",null, "סיימת למלא טופס 101."));
+  w.appendChild(el("p",null, "סיימת למלא טופס 101, כעת נעבור למלא את חוזה העבודה שלך. ממשיכים!"));
 
   if(s.taxCoord==="yes" && s.taxReason==="multi"){
     var warn = el("div","notice warn");
@@ -1240,13 +1241,10 @@ function renderDone(){
   w.appendChild(contractWrap);
 
   var pdfActions = el("div","nav");
-  var view = el("button","btn btn-soft","צפייה בטופס 101");
-  view.type="button";
-  view.onclick = function(){ openPdf(view); };
   var dl = el("button","btn btn-soft","הורדת הטופס");
   dl.type="button";
   dl.onclick = function(){ downloadPdf(dl); };
-  pdfActions.appendChild(view); pdfActions.appendChild(dl);
+  pdfActions.appendChild(dl);
   w.appendChild(pdfActions);
 
   var backWrap = el("div","nav");
