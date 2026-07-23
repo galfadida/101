@@ -156,6 +156,41 @@ describe("5 · העובד כותב רק את שדות הטופס", () => {
   });
 });
 
+describe("5ב · answers מוגבל לשדות טופס 101 בלבד", () => {
+  const put = (answers, extra = {}) =>
+    setDoc(doc(anon(UID_A), "employees", EMP_A, "form101", "current"),
+      { answers, stepIndex: 2, status: "draft", updatedAt: new Date(), ...extra });
+
+  it("שדות מוכרים מתקבלים", async () => {
+    await assertSucceeds(put({
+      idNum: "301138541", firstName: "גל", lastName: "פדידה", birthDate: "1990-05-14",
+      gender: "f", city: "ירושלים", street: "בר אילן", houseNo: "9", zip: "9510209",
+      kids: [{ name: "נועה", birth: "2015-01-01", custody: "yes" }],
+      p8: { "1": true }, p8f: { "14_from": "2010-01-01" }, signature: "data:image/png;base64,AAA",
+    }));
+  });
+  it("שדה שרירותי ב-answers נדחה", async () => {
+    await assertFails(put({ idNum: "301138541", isManager: true }));
+  });
+  it("ניסיון להזריק שכר לתוך answers נדחה", async () => {
+    await assertFails(put({ salary: 99999 }));
+  });
+  it("שדה עם שם דומה אך לא ברשימה נדחה", async () => {
+    await assertFails(put({ idNumber: "301138541" }));
+  });
+  it("answers שאינו מפה נדחה", async () => {
+    await assertFails(setDoc(doc(anon(UID_A), "employees", EMP_A, "form101", "current"),
+      { answers: "hacked", stepIndex: 1, status: "draft" }));
+  });
+  it("stepIndex לא חוקי נדחה", async () => {
+    await assertFails(put({ idNum: "1" }, { stepIndex: 9999 }));
+    await assertFails(put({ idNum: "1" }, { stepIndex: "3" }));
+  });
+  it("חתימה ענקית נדחית", async () => {
+    await assertFails(put({ signature: "d".repeat(400001) }));
+  });
+});
+
 describe("6 · נעילה אחרי הגשה", () => {
   it("מגיש", async () => {
     await assertSucceeds(setDoc(doc(anon(UID_A), "employees", EMP_A, "form101", "current"),

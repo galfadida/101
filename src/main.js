@@ -2,7 +2,8 @@ import "./styles.css";
 import { startApp } from "./app.js";
 import { LOGO } from "./logo.js";
 import {
-  tokenFromUrl, openInvite, loadForm, makeDebouncedSaver, submitForm, InviteError,
+  tokenFromUrl, stripTokenFromUrl, openInvite, loadForm,
+  makeDebouncedSaver, submitForm, InviteError,
 } from "./data.js";
 
 const main = document.getElementById("main");
@@ -44,7 +45,9 @@ async function boot() {
   let session;
   try {
     session = await openInvite(token);
+    stripTokenFromUrl();
   } catch (e) {
+    stripTokenFromUrl();
     const key = e instanceof InviteError ? e.code : "denied";
     const [title, body] = MESSAGES[key] || MESSAGES.denied;
     screenMessage(title, body, "warn");
@@ -68,6 +71,8 @@ async function boot() {
     submit: async (answers) => {
       await saver.flushNow();
       await submitForm(employeeId, answers);
+      // אחרי הגשה אין יותר צורך בטיוטה המקומית — היא מכילה פרטים אישיים
+      try { localStorage.removeItem("tofes101_" + employeeId); } catch { /* ignore */ }
     },
   });
 }

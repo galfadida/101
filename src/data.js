@@ -26,6 +26,20 @@ export function tokenFromUrl() {
   return p.get("t") || "";
 }
 
+/**
+ * מסיר את ה-token משורת הכתובת מיד אחרי השימוש בו.
+ * מונע הישארות בהיסטוריית הדפדפן, בשיתוף מסך ובצילומי מסך.
+ * ה-token אינו נשמר בשום מקום בצד הלקוח — לא ב-localStorage ולא ב-sessionStorage.
+ */
+export function stripTokenFromUrl() {
+  try {
+    const url = new URL(location.href);
+    if (!url.searchParams.has("t")) return;
+    url.searchParams.delete("t");
+    history.replaceState(null, "", url.pathname + url.search + url.hash);
+  } catch { /* ignore */ }
+}
+
 /** מאמת את הקישור, קושר את המשתמש האנונימי לעובד, ומחזיר את הפרופיל הגלוי לעובד */
 export async function openInvite(token) {
   if (!token) throw new InviteError("missing", "לא נמצא קוד בקישור");

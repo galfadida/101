@@ -48,6 +48,38 @@ service cloud.firestore {
         && inviteUsable(inviteDoc(bindingDoc().token));
     }
 
+    // רשימת השדות היחידים שמותר שיופיעו בתשובות טופס 101.
+    // כל מפתח אחר — נדחה. אין שדות שרירותיים ואין הזרקת מידע.
+    function allowedAnswerKeys() {
+      return [
+        'idNum', 'firstName', 'lastName', 'birthDate', 'gender',
+        'bornIsrael', 'aliyaDate',
+        'street', 'houseNo', 'city', 'zip',
+        'mobile', 'phone', 'email',
+        'resident', 'kibbutz', 'hmoMember', 'hmo',
+        'marital', 'singleParentDiv', 'alimonyDiv',
+        'spouseId', 'spouseLast', 'spouseFirst', 'spouseBirth', 'spouseAliya', 'spouseIncome',
+        'hasKids', 'kids',
+        'payType', 'startDate',
+        'otherIncome', 'otherKinds', 'creditChoice', 'decl9', 'decl10',
+        'p8', 'p8f',
+        'taxCoord', 'taxReason', 'employers', 'coordFile',
+        'signature', 'signDate'
+      ];
+    }
+
+    function validForm(data) {
+      return data.keys().hasOnly(['answers', 'stepIndex', 'status', 'updatedAt', 'submittedAt'])
+        && data.answers is map
+        && data.answers.keys().hasOnly(allowedAnswerKeys())
+        && data.status in ['draft', 'submitted']
+        && data.stepIndex is int
+        && data.stepIndex >= 0
+        && data.stepIndex <= 60
+        && (!('signature' in data.answers) || data.answers.signature is string)
+        && (!('signature' in data.answers) || data.answers.signature.size() < 400000);
+    }
+
     // תנאי לקשירת uid לעובד: מחזיקים token תקף שמצביע בדיוק על אותו עובד
     function mayBind() {
       return signedIn()
@@ -113,21 +145,14 @@ service cloud.firestore {
         allow list: if isAdmin();
 
         allow create: if isAdmin()
-          || (
-            boundTo(employeeId)
-            && request.resource.data.keys().hasOnly(
-                 ['answers', 'stepIndex', 'status', 'updatedAt', 'submittedAt'])
-            && request.resource.data.status in ['draft', 'submitted']
-          );
+          || (boundTo(employeeId) && validForm(request.resource.data));
 
         // אחרי הגשה סופית הטופס ננעל לכתיבה מצד העובד
         allow update: if isAdmin()
           || (
             boundTo(employeeId)
             && resource.data.status != 'submitted'
-            && request.resource.data.keys().hasOnly(
-                 ['answers', 'stepIndex', 'status', 'updatedAt', 'submittedAt'])
-            && request.resource.data.status in ['draft', 'submitted']
+            && validForm(request.resource.data)
           );
 
         allow delete: if isAdmin();

@@ -1,5 +1,6 @@
 import { ADDR_BLOB } from "./addr.js";
 import { LOGO } from "./logo.js";
+import { lookupZip } from "./geocode.js";
 
 /* =========================================================
    פרטי העובד — מגיעים מ-employees/{id}/public/profile ב-Firestore.
@@ -317,8 +318,9 @@ var steps = [
          {k:"street",l:"רחוב",combo:"street",v:req,grow:true,ph:"הקלדה לחיפוש…"},
          {k:"houseNo",l:"מספר",type:"text",mode:"numeric",v:req,narrow:true},
          {k:"zip",l:"מיקוד",type:"text",mode:"numeric",max:7,ph:"7 ספרות",
-          hint:"אפשר לבדוק באתר דואר ישראל",
-          v:function(x){ return isDigits(x,7) ? "" : "מיקוד הוא 7 ספרות"; }}]},
+          hint:"נמלא אותו עבורך — אפשר לתקן",
+          v:function(x){ return isDigits(x,7) ? "" : "מיקוד הוא 7 ספרות"; }}],
+ after:wireZipLookup},
 
 {sec:"פרטים אישיים", q:function(){return "איך אפשר להשיג אותך?"}, sub:"הנייד הגיע מהמעסיק — אפשר לתקן",
  fields:[{k:"mobile",l:"טלפון נייד",type:"tel",mode:"tel",v:function(x){return validMobile(x)?"":"מספר נייד לא תקין (05X-XXXXXXX)"}},
@@ -443,6 +445,50 @@ var steps = [
 ];
 
 function req(x){ return String(x||"").trim() ? "" : "נא למלא שדה זה"; }
+
+/* ---------- השלמת מיקוד ---------- */
+function wireZipLookup(wrap){
+  var zipField = wrap.querySelector('[data-key="zip"]');
+  if(!zipField) return;
+  var zipInput = zipField.querySelector("input");
+  var hint = zipField.querySelector(".hint");
+  var baseHint = hint ? hint.textContent : "";
+  var timer = null;
+  var lastTried = "";
+  var manual = false;
+
+  zipInput.addEventListener("input", function(){ manual = true; if(hint) hint.textContent = baseHint; });
+
+  function tryLookup(){
+    if(manual && s.zip) return;
+    var key = s.city + "|" + s.street + "|" + s.houseNo;
+    if(!s.city || !s.street || !s.houseNo || key === lastTried) return;
+    lastTried = key;
+    if(hint) hint.textContent = "מחפשים את המיקוד…";
+    lookupZip(s.city, s.street, s.houseNo).then(function(zip){
+      if(zip && !manual){
+        s.zip = zip;
+        zipInput.value = zip;
+        zipField.classList.remove("bad");
+        if(hint) hint.textContent = "מולא אוטומטית — אפשר לתקן";
+        save();
+      } else if(!zip){
+        if(hint) hint.textContent = "לא הצלחנו למצוא — נא למלא ידנית";
+      }
+    });
+  }
+
+  ["city","street","houseNo"].forEach(function(k){
+    var f = wrap.querySelector('[data-key="'+k+'"]');
+    if(!f) return;
+    f.addEventListener("input", function(){
+      clearTimeout(timer);
+      timer = setTimeout(tryLookup, 700);
+    });
+  });
+
+  if(s.city && s.street && s.houseNo && !s.zip) setTimeout(tryLookup, 250);
+}
 
 /* =========================================================
    navigation
@@ -569,6 +615,8 @@ function renderStep(){
   wrap.appendChild(nav);
 
   main.appendChild(wrap);
+
+  if(st.after) st.after(wrap);
 
   var first = wrap.querySelector("input,select,textarea");
   if(first && window.matchMedia && window.matchMedia("(min-width:640px)").matches) first.focus();
