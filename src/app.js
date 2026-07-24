@@ -528,6 +528,10 @@ var steps = [
 function req(x){ return String(x||"").trim() ? "" : "נא למלא שדה זה"; }
 
 /* ---------- השלמת מיקוד ---------- */
+function zipLookupLink(){
+  return '<a class="hint-link" href="https://israelpost.co.il/zipcodesearch" target="_blank" rel="noopener noreferrer">' +
+         'לאיתור המיקוד באתר דואר ישראל »</a>';
+}
 function wireZipLookup(wrap){
   var zipField = wrap.querySelector('[data-key="zip"]');
   if(!zipField) return;
@@ -550,23 +554,33 @@ function wireZipLookup(wrap){
     if(!s.city || !s.street || !s.houseNo || key === lastTried) return;
     lastTried = key;
     if(hint) hint.textContent = "מחפשים את המיקוד…";
-    // 1) התאמת בית מדויקת מהמאגר הרשמי · 2) גוגל (עדכני) · 3) הערכת שכן קרוב
+    // 1) התאמת בית מדויקת מהמאגר הרשמי · 2) גוגל · 3) הערכת שכן קרוב (מסומן "לוודא")
     localZip(s.city, s.street, s.houseNo).then(function(z){
-      return z || lookupZip(s.city, s.street, s.houseNo);
-    }).then(function(z){
-      return z || localZipApprox(s.city, s.street, s.houseNo);
-    }).then(function(zip){
-      if(zip && !manual){
-        s.zip = zip;
-        zipInput.value = zip;
+      if(z) return {zip:z, approx:false};
+      return lookupZip(s.city, s.street, s.houseNo).then(function(g){
+        if(g) return {zip:g, approx:false};
+        return localZipApprox(s.city, s.street, s.houseNo).then(function(a){
+          return {zip:a, approx:!!a};
+        });
+      });
+    }).then(function(res){
+      if(!hint) return;
+      hint.classList.remove("approx");
+      if(res.zip && !manual){
+        s.zip = res.zip;
+        zipInput.value = res.zip;
         zipField.classList.remove("bad");
-        if(hint) hint.textContent = "מולא אוטומטית — אפשר לתקן";
+        if(res.approx){
+          // מיקוד משוער (שכן קרוב) — ממלאים אבל מבקשים לוודא, עם קישור לאיתור
+          hint.classList.add("approx");
+          hint.innerHTML = 'השלמה משוערת — נא לוודא את המיקוד ' + zipLookupLink();
+        } else {
+          hint.textContent = "מולא אוטומטית — אפשר לתקן";
+        }
         save();
-      } else if(!zip){
-        if(hint) hint.innerHTML = 'לא הצלחנו למצוא — ' +
-          '<a class="hint-link" href="https://doar.israelpost.co.il/locatezip" target="_blank" rel="noopener noreferrer">' +
-          'לחיפוש המיקוד באתר דואר ישראל</a>';
-      } else if(hint){
+      } else if(!res.zip){
+        hint.innerHTML = 'לא הצלחנו למצוא — נא למלא ידנית ' + zipLookupLink();
+      } else {
         // נמצא מיקוד אך העובד כבר הקליד אחד — לא דורסים, ומחזירים את ההסבר
         hint.textContent = baseHint;
       }
