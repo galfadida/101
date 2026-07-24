@@ -282,6 +282,26 @@ input::placeholder{color:var(--muted)}
   border:solid #fff;border-width:0 2px 2px 0;border-radius:0;background:none;transform:rotate(45deg)}
 .field.bad .choice.decl-check{box-shadow:0 0 0 3px var(--danger-soft)}
 
+/* ---------- bank: help link, modal, summary ---------- */
+.bank-help-link{background:none;border:0;color:var(--brand);font:inherit;font-size:15px;font-weight:700;
+  text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:4px 0;margin-top:4px;text-align:start}
+.bank-help-link:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:4px}
+.modal-overlay{position:fixed;inset:0;z-index:80;background:rgba(20,15,22,.55);display:flex;
+  align-items:center;justify-content:center;padding:20px}
+.modal-box{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px;
+  max-width:400px;width:100%;box-shadow:var(--shadow);max-height:88vh;overflow-y:auto}
+.modal-box h2{font-size:19px;font-weight:800;margin:0 0 14px}
+.modal-box ol{margin:0 0 14px;padding-inline-start:22px;display:flex;flex-direction:column;gap:9px;font-size:16px;line-height:1.5}
+.modal-box .tip{background:var(--brand-soft);border-radius:10px;padding:12px 14px;font-size:15px;line-height:1.5;margin:0 0 16px}
+.modal-box .btn{width:100%}
+.bank-sum{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:6px 16px;margin-bottom:18px}
+.bank-sum-row{display:flex;justify-content:space-between;gap:14px;padding:11px 0;border-bottom:1px solid var(--line);font-size:16px}
+.bank-sum-row:last-child{border-bottom:0}
+.bank-sum-row span{color:var(--muted);flex:none}
+.bank-sum-row b{font-weight:700;text-align:end;word-break:break-word}
+.choice.bank-decl{align-items:flex-start}
+.choice.bank-decl .dot{margin-top:3px}
+
 /* ---------- done ---------- */
 .done{text-align:center;padding:20px 0}
 .seal{width:66px;height:66px;margin:0 auto 18px;border-radius:50%;background:var(--brand-soft);

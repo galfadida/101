@@ -32,7 +32,7 @@ var s = {
   gender:SEED.gender, bornIsrael:"", aliyaDate:"",
   street:"", houseNo:"", city:"", zip:"",
   mobile:SEED.mobile, phone:"", email:"",
-  bankHolder:"", bankCode:"", bankBranch:"", bankAccount:"",
+  bankHolder:"", bankCode:"", bankBranch:"", bankAccount:"", bankConfirm:false,
   resident:"", kibbutz:"", hmoMember:"", hmo:"",
   marital:"", singleParentDiv:"", alimonyDiv:"",
   spouseId:"", spouseLast:"", spouseFirst:"", spouseBirth:"", spouseAliya:"", spouseIncome:"",
@@ -71,8 +71,14 @@ function resetAll(){
 /* ---------- persistence ----------
    מקומי: מיידי, כדי שרענון או ניתוק רשת לא יאבדו כלום.
    מרוחק: טיוטה ל-Firestore בדיבאונס, תחת employees/{id}/form101/current. */
+// שדות רגישים שלא נשמרים ב-localStorage (נשמרים רק ב-Firestore, מוגן בהרשאות)
+var LOCAL_EXCLUDE = ["bankAccount","bankHolder"];
 function save(){
-  try{ localStorage.setItem(STORE, JSON.stringify({s:s,i:stepIdx})); }catch(e){}
+  try{
+    var local = {};
+    for(var k in s){ if(LOCAL_EXCLUDE.indexOf(k)===-1) local[k]=s[k]; }
+    localStorage.setItem(STORE, JSON.stringify({s:local,i:stepIdx}));
+  }catch(e){}
   if(remote && remote.saver) remote.saver.queue(s, stepIdx);
 }
 function load(){
@@ -346,18 +352,29 @@ var steps = [
     prefill:function(){return (s.firstName+" "+s.lastName).trim();},
     hint:"ברירת המחדל היא שמך — אפשר לשנות אם החשבון על שם מישהו אחר"},
    {k:"bankCode",l:"בנק",bank:true,v:function(x){return String(x||"").trim()?"":"נא לבחור בנק מהרשימה";},
-    ph:"הקלדה לחיפוש בנק…"},
+    ph:"בחירת בנק מהרשימה"},
    {k:"bankBranch",l:"סניף",branchCombo:true,half:true,ph:"מספר או שם הסניף",
-    hint:"מספר הסניף או שמו — מתוך רשימת הסניפים של הבנק",
+    hint:"מתוך רשימת הסניפים של הבנק שנבחר",
     v:function(){
+      if(!s.bankCode) return "נא לבחור בנק תחילה";
       if(!String(s.bankBranch||"").trim()) return "נא לבחור סניף";
-      if(!branchExists(s.bankCode, s.bankBranch)) return "לא נמצא סניף כזה בבנק שנבחר — בדקי את המספר או בחרי מהרשימה";
+      if(!branchExists(s.bankCode, s.bankBranch)) return "לא נמצא סניף כזה בבנק שנבחר — בחרי מהרשימה";
       return "";
     }},
-   {k:"bankAccount",l:"מספר חשבון",type:"text",mode:"numeric",max:9,half:true,ph:"4 עד 9 ספרות",
-    v:function(x){return /^\d{4,9}$/.test(x)?"":"מספר החשבון חייב להיות בין 4 ל-9 ספרות";}}
+   {k:"bankAccount",l:"מספר חשבון",account:true,max:9,half:true,ph:"ספרות בלבד",
+    v:function(x){
+      var d = String(x||"");
+      if(!d) return "נא להזין מספר חשבון";
+      if(!/^\d+$/.test(d)) return "מספר החשבון מכיל ספרות בלבד";
+      if(d.length > 9) return "מספר חשבון ארוך מדי";
+      return "";
+    }}
  ],
- after:wireBankWarn},
+ after:wireBankHelp},
+
+{sec:"פרטי חשבון בנק", q:function(){return "אישור פרטי החשבון"}, sub:"נא לוודא שהפרטים נכונים לפני המשך",
+ when:function(){return !!(s.bankCode && s.bankBranch && s.bankAccount)},
+ bankSummary:true},
 
 {sec:"פרטים אישיים", q:function(){return SEED.firstName+", "+G("הקלד","הקלידי")+" 9 ספרות של תעודת הזהות שלך כולל ספרת ביקורת 😊"}, sub:"",
  fields:[{k:"idNum",l:"מספר תעודת זהות",type:"text",mode:"numeric",max:9,ph:"000000000",
@@ -564,34 +581,66 @@ function wireZipLookup(wrap){
   if(s.city && s.street && s.houseNo && !s.zip) setTimeout(tryLookup, 250);
 }
 
-/* ---------- אזהרה רכה על מספר חשבון בנק ---------- */
-function wireBankWarn(wrap){
-  var accField = wrap.querySelector('[data-key="bankAccount"]');
-  if(!accField) return;
-  var warnEl = el("div","bank-warn");
-  accField.appendChild(warnEl);
-
-  function refresh(){
-    warnEl.classList.remove("show");
-    warnEl.textContent = "";
-    if(!s.bankCode) return;
-    var acc = String(s.bankAccount||"").replace(/\D/g,"");
-    var br  = String(s.bankBranch||"").replace(/\D/g,"");
-    if(acc.length < 4 || !br) return;            // לא מזהירים בזמן הקלדה
-    var res = validateBank(s.bankCode, br, acc);
-    if(res && res.warn){
-      warnEl.textContent = res.warn;
-      warnEl.classList.add("show");
-    }
+/* ---------- קישור עזרה: אישור ניהול חשבון ----------
+   בדיקת ה-checksum היא כלי פנימי בלבד ואינה מוצגת לעובד בשום צורה. */
+/* ---------- מסך סיכום פרטי חשבון בנק + הצהרה ---------- */
+function buildBankSummary(host){
+  var bank = bankByCode(s.bankCode);
+  var rows = el("div","bank-sum");
+  function row(label, value){
+    var r = el("div","bank-sum-row");
+    r.appendChild(el("span",null,label));
+    r.appendChild(el("b",null,value||"—"));
+    rows.appendChild(r);
   }
+  row("בנק", bank ? bank.name : s.bankCode);
+  row("סניף", branchLabel(s.bankCode, s.bankBranch));
+  row("שם בעל החשבון", s.bankHolder);
+  row("מספר חשבון", String(s.bankAccount||""));
+  host.appendChild(rows);
 
-  ["bankBranch","bankAccount","bankCode"].forEach(function(k){
-    var inp = wrap.querySelector('[data-key="'+k+'"] input');
-    if(!inp) return;
-    inp.addEventListener("input", refresh);
-    inp.addEventListener("blur", function(){ setTimeout(refresh, 160); });
-  });
-  setTimeout(refresh, 300);
+  var dwrap = el("div","field");
+  dwrap.dataset.key = "bankConfirm";
+  var db = el("button","choice sq bank-decl"); db.type = "button";
+  db.setAttribute("role","checkbox"); db.setAttribute("aria-checked", s.bankConfirm?"true":"false");
+  db.appendChild(el("span","dot"));
+  db.appendChild(el("span","txt",
+    "אני מצהיר/ה כי בדקתי את פרטי הבנק, הסניף ומספר החשבון שהזנתי, וכי אלה הפרטים שאליהם אבקש להעביר את משכורתי. ידוע לי כי האחריות לנכונות הפרטים שהוזנו חלה עליי."));
+  db.onclick = function(){
+    s.bankConfirm = !s.bankConfirm;
+    db.setAttribute("aria-checked", s.bankConfirm?"true":"false");
+    dwrap.classList.remove("bad"); save();
+  };
+  dwrap.appendChild(db);
+  dwrap.appendChild(el("div","err",""));
+  host.appendChild(dwrap);
+}
+
+function wireBankHelp(wrap){
+  var help = el("button","bank-help-link","איך מפיקים אישור ניהול חשבון?");
+  help.type = "button";
+  help.onclick = openAccountCertHelp;
+  wrap.appendChild(help);
+}
+function openAccountCertHelp(){
+  var ov = el("div","modal-overlay");
+  var box = el("div","modal-box");
+  box.appendChild(el("h2",null,"איך מפיקים אישור ניהול חשבון?"));
+  var ol = el("ol");
+  [ "היכנס/י לאפליקציה או לאתר של הבנק.",
+    "היכנס/י לאזור מסמכים, אישורים, דוחות או סיכומים.",
+    "בחר/י אישור ניהול חשבון או אישור בעלות בחשבון.",
+    "הורד/י את המסמך." ].forEach(function(t){ ol.appendChild(el("li",null,t)); });
+  box.appendChild(ol);
+  var tip = el("p","tip");
+  tip.innerHTML = "💡 <b>טיפ:</b> ברוב אפליקציות הבנקים אפשר לחפש את הביטוי \"אישור ניהול חשבון\" בשורת החיפוש.";
+  box.appendChild(tip);
+  var close = el("button","btn btn-primary","הבנתי"); close.type = "button";
+  close.onclick = function(){ ov.remove(); };
+  box.appendChild(close);
+  ov.appendChild(box);
+  ov.addEventListener("click", function(e){ if(e.target===ov) ov.remove(); });
+  document.body.appendChild(ov);
 }
 
 /* =========================================================
@@ -693,6 +742,7 @@ function renderStep(){
   if(st.employers) buildEmployers(body);
   if(st.upload)    buildUpload(body, st.upload);
   if(st.part8)     buildPart8(body);
+  if(st.bankSummary) buildBankSummary(body);
   if(st.sign)      buildSign(body);
 
   var bt = document.getElementById("backTop");
@@ -793,6 +843,34 @@ function mkField(f){
         d.classList.remove("bad");
         save();
       }));
+    if(f.hint) d.appendChild(el("div","hint",f.hint));
+    d.appendChild(el("div","err",""));
+    return d;
+  }
+  if(f.account){
+    // מספר חשבון: ספרות בלבד, ללא הדבקה וללא גרירה. נשמר כמחרוזת, אפסים מובילים נשמרים.
+    i.type = "text";
+    i.inputMode = "numeric";
+    i.autocomplete = "off";
+    i.setAttribute("autocorrect","off");
+    i.setAttribute("spellcheck","false");
+    if(f.max) i.maxLength = f.max;
+    if(f.ph) i.placeholder = f.ph;
+    i.value = esc(s[f.k]);
+    i.addEventListener("beforeinput", function(e){
+      if(e.data != null && /\D/.test(e.data)) e.preventDefault();
+    });
+    i.addEventListener("input", function(){
+      var clean = i.value.replace(/\D/g,"").slice(0, f.max||9);
+      if(i.value !== clean) i.value = clean;
+      s[f.k] = i.value;
+      d.classList.remove("bad"); save();
+    });
+    i.addEventListener("paste", function(e){ e.preventDefault(); });
+    i.addEventListener("drop", function(e){ e.preventDefault(); });
+    i.addEventListener("dragover", function(e){ e.preventDefault(); });
+    i.addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); go(1); } });
+    d.appendChild(i);
     if(f.hint) d.appendChild(el("div","hint",f.hint));
     d.appendChild(el("div","err",""));
     return d;
@@ -1274,6 +1352,7 @@ function collect(st){
     }
   }
   if(st.upload && !st.upload.optional && !s[st.upload.k]) return stepError("נא לצרף את הקובץ כדי להמשיך");
+  if(st.bankSummary && !s.bankConfirm){ return fail(host,"bankConfirm","נא לאשר את ההצהרה כדי להמשיך"); }
   if(st.sign && !s.declConfirmed){ return fail(host,"declConfirmed","נא לאשר את ההצהרה לפני הסיום"); }
   if(st.sign && !s.signature){ return fail(host,"signature","נא לחתום לפני הסיום"); }
   return true;
