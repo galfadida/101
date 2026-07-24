@@ -502,7 +502,7 @@ var steps = [
      '<br><br>מומלץ להסדיר תיאום מס בהקדם ולשלוח אותו לכתובת: ' +
      '<a class="mailto" style="white-space:nowrap" href="mailto:'+HR_MAIL+'">'+HR_MAIL+"</a>"; }}},
 
-{sec:"תיאום מס", q:function(){return "מה סיבת הבקשה?"}, sub:"",
+{sec:"תיאום מס", q:function(){return "מהן הסיבות לבקשת תיאום מס?"}, sub:"",
  when:function(){return s.otherIncome==="yes" && s.taxCoord==="yes"},
  choice:{k:"taxReason", opts:[
    {v:"noIncome",l:"לא הייתה לי הכנסה מתחילת שנת המס הנוכחית עד לתחילת עבודתי אצל מעסיק זה."},
