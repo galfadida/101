@@ -374,7 +374,7 @@ var steps = [
  when:function(){return !!(s.bankCode && s.bankBranch && s.bankAccount)},
  bankSummary:true},
 
-{sec:"פרטים אישיים", q:function(){return SEED.firstName+", מהי תעודת הזהות שלך? 😊"}, sub:"כולל ספרת ביקורת",
+{sec:"פרטים אישיים", q:function(){return "מהי תעודת הזהות שלך? 😊"}, sub:"כולל ספרת ביקורת",
  fields:[{k:"idNum",l:"מספר תעודת זהות",type:"text",mode:"numeric",max:9,ph:"000000000",
           v:function(x){return validIsraeliId(x)?"":"מספר תעודת זהות לא תקין — נסי לבדוק שוב"}}]},
 
