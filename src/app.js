@@ -1703,7 +1703,7 @@ function downloadPensionPdf(btn){
     return import("./pension-pdf.js").then(function(mod){
       return mod.pensionLetterBlob({
         firstName: s.firstName, lastName: s.lastName,
-        idNum: s.idNum, taxFile: EMPLOYER.taxFile,
+        idNum: s.idNum, mobile: s.mobile, taxFile: EMPLOYER.taxFile,
       });
     }).then(function(blob){
       var url = URL.createObjectURL(blob);

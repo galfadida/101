@@ -99,7 +99,12 @@ export async function pensionLetterBlob(info) {
 
   const name = ((info.firstName || "") + " " + (info.lastName || "")).trim();
 
-  drawRight("לכבוד: החברה המנהלת את החיסכון הפנסיוני", 13);
+  // פרטי הלקוח בראש המסמך
+  drawRight("פרטי הלקוח:", 11, 0, true);
+  drawRight("שם: " + name, 11, 2);
+  drawRight("תעודת זהות: " + (info.idNum || ""), 11);
+
+  drawRight("לכבוד: החברה המנהלת את החיסכון הפנסיוני", 13, 16);
   drawRight("הנדון: עדכון פרטי מעסיק לצורך המשך הפקדות פנסיוניות", 12, 6);
   drawRight("שלום רב,", 11, 10);
   drawWrapped("אני מבקש/ת לעדכן את פרטי המעסיק החדש שלי לצורך המשך ביצוע ההפקדות לחיסכון הפנסיוני הקיים שלי.", 11, 8);
@@ -118,9 +123,10 @@ export async function pensionLetterBlob(info) {
 
   drawWrapped("אבקש לעדכן את פרטי המעסיק במערכת ולהמשיך את ההפקדות לקופה הקיימת בהתאם לפרטים המפורטים לעיל.", 11, 12);
 
+  if (info.mobile) drawRight("לפרטים ושאלות נוספות ניתן לפנות אליי בטלפון: " + info.mobile, 11, 12);
+
   drawRight("בברכה,", 11, 16);
   drawRight(name, 11, 2);
-  drawRight("תעודת זהות: " + (info.idNum || ""), 11);
   drawRight("תאריך: " + todayDmy(), 11);
 
   const bytes = await doc.save();
