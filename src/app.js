@@ -1237,7 +1237,7 @@ function buildContract(host){
     ctx = cv.getContext("2d"); if(!ctx) return;
     ctx.scale(dpr,dpr);
     ctx.lineWidth = 2.2; ctx.lineCap="round"; ctx.lineJoin="round";
-    ctx.strokeStyle = getComputedStyle(document.body).color;
+    ctx.strokeStyle = "#181425";   // צבע כהה קבוע — לא תלוי theme, כדי שהחתימה תיראה גם על PDF לבן
     if(s.contractSignature){
       var img = new Image();
       img.onload = function(){ ctx.drawImage(img,0,0,rect.width,190); };
@@ -1587,7 +1587,7 @@ function buildSign(host){
     if(!ctx) return;
     ctx.scale(dpr,dpr);
     ctx.lineWidth = 2.2; ctx.lineCap="round"; ctx.lineJoin="round";
-    ctx.strokeStyle = getComputedStyle(document.body).color;
+    ctx.strokeStyle = "#181425";   // צבע כהה קבוע — לא תלוי theme, כדי שהחתימה תיראה גם על PDF לבן
     if(s.signature){
       var img = new Image();
       img.onload = function(){ ctx.drawImage(img,0,0,rect.width,190); };
