@@ -1116,20 +1116,24 @@ function buildUpload(host, u){
 
 /* ---------- שאלת קופה פעילה + קוביה inline ---------- */
 function buildPenActive(host){
-  // צביעת המילה "פעילה" בכותרת השאלה (ה-wrap עדיין לא ב-main בשלב זה, לכן דרך host.parentNode)
-  var q = host.parentNode ? host.parentNode.querySelector("h1.q") : null;
-  if(q) q.innerHTML = 'האם קיימת לך קופה פנסיונית <span class="hl">פעילה</span> שבוצעה אליה הפקדה במהלך 6 החודשים האחרונים?';
+  // צביעת "פעילה" בכותרת ובהסבר (ה-wrap עדיין לא ב-main בשלב זה, לכן דרך host.parentNode)
+  if(host.parentNode){
+    var q = host.parentNode.querySelector("h1.q");
+    if(q) q.innerHTML = 'האם קיימת לך קופה פנסיונית <span class="hl">פעילה</span> שבוצעה אליה הפקדה במהלך 6 החודשים האחרונים?';
+    var sub = host.parentNode.querySelector(".sub");
+    if(sub) sub.innerHTML = 'קופה <span class="hl">פעילה</span> היא קופה שבוצעה אליה לפחות הפקדה אחת במהלך ששת החודשים האחרונים.';
+  }
 
   var box = el("div","choices");
   var note = el("div","notice info pen-note");
   function updateNote(){
     if(s.penActive==="yes"){
       note.innerHTML = "על פי המידע שמסרת, קיימת ברשותך קופה פנסיונית פעילה." +
-        "<br><br>בהתאם לחוק, ההפרשות הפנסיוניות יבוצעו לאחר <b>3 חודשי עבודה</b>, באופן רטרואקטיבי החל מיום תחילת עבודתך.";
+        '<br><br>בהתאם לחוק, ההפרשות הפנסיוניות יבוצעו לאחר <span class="hl">3 חודשי עבודה</span>, באופן רטרואקטיבי החל מיום תחילת עבודתך.';
       note.style.display = "";
     } else if(s.penActive==="no"){
       note.innerHTML = "על פי המידע שמסרת, אין ברשותך קופה פנסיונית פעילה (לא בוצעה אליה הפקדה במהלך 6 החודשים האחרונים)." +
-        "<br><br>בהתאם לחוק, ההפרשות הפנסיוניות יחלו לאחר <b>6 חודשי עבודה</b>.";
+        '<br><br>בהתאם לחוק, ההפרשות הפנסיוניות יחלו לאחר <span class="hl">6 חודשי עבודה</span>.';
       note.style.display = "";
     } else {
       note.style.display = "none";

@@ -136,7 +136,7 @@ input::placeholder{color:var(--muted)}
 .date-in{direction:ltr;text-align:right;font-variant-numeric:tabular-nums;letter-spacing:.04em}
 .hint{font-size:14px;color:var(--muted)}
 .hint.approx{color:var(--gold);font-weight:600}
-.q .hl{color:var(--common);font-weight:800}
+.hl{color:var(--ok);font-weight:800}
 .pen-note{margin-top:16px}
 .seg{display:flex;gap:10px}
 .seg-btn{flex:1;padding:13px;border:1px solid var(--line-2);background:var(--surface);border-radius:11px;
