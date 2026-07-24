@@ -1126,12 +1126,13 @@ function buildPenActive(host){
 
   var box = el("div","choices");
   var note = el("div","notice info pen-note");
+  var nm = s.firstName ? '<b>'+s.firstName+'</b>, ' : "";
   function updateNote(){
     if(s.penActive==="yes"){
-      note.innerHTML = 'בהתאם לחוק, ההפרשות הפנסיוניות יבוצעו לאחר <span class="hl">3 חודשי עבודה</span>, באופן רטרואקטיבי החל מיום תחילת עבודתך.';
+      note.innerHTML = nm + 'בהתאם לחוק, ההפרשות הפנסיוניות יבוצעו לאחר <span class="hl">3 חודשי עבודה</span>, באופן רטרואקטיבי החל מיום תחילת עבודתך.';
       note.style.display = "";
     } else if(s.penActive==="no"){
-      note.innerHTML = "על פי המידע שמסרת, אין ברשותך קופה פנסיונית פעילה (לא בוצעה אליה הפקדה במהלך 6 החודשים האחרונים)." +
+      note.innerHTML = nm + "על פי המידע שמסרת, אין ברשותך קופה פנסיונית פעילה (לא בוצעה אליה הפקדה במהלך 6 החודשים האחרונים)." +
         '<br><br>בהתאם לחוק, ההפרשות הפנסיוניות יחלו לאחר <span class="hl">6 חודשי עבודה</span>.';
       note.style.display = "";
     } else {
@@ -1159,7 +1160,8 @@ function buildPenActive(host){
 /* ---------- מסך העלאת מסמכי פנסיה ---------- */
 function buildPenDocs(host){
   var intro = el("div","notice info");
-  intro.innerHTML =
+  var nm = s.firstName ? '<b>'+s.firstName+'</b>, ' : "";
+  intro.innerHTML = nm +
     'כדי שנוכל להמשיך להפקיד לאותה קופה נצטרך את המסמכים הבאים:' +
     '<br><span class="hl">אישור קופה פעילה</span> + <span class="hl">טופס "קוביות"</span> (יש להשיג אותו מהסוכן / חברת הביטוח שלכם).' +
     '<br><br>אם אין ברשותכם את המסמכים — תוכלו לדלג כעת ולהשלים בהמשך, <span class="hl">בחודש הראשון</span> לעבודתכם.';

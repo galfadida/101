@@ -71,14 +71,17 @@ export async function pensionLetterBlob(info) {
     y += lh + 22;
   } catch (e) { y = 70; }
 
-  function put(text, size) {
+  function put(text, size, bold) {
     // רוחב זהה בין לוגי לחזותי (אותם תווים), לכן מודדים על המקור
     const w = font.widthOfTextAtSize(text, size);
-    page.drawText(toVisual(text), { x: RIGHT - w, y: PAGE_H - y, size, font, color: colour });
+    const vis = toVisual(text);
+    page.drawText(vis, { x: RIGHT - w, y: PAGE_H - y, size, font, color: colour });
+    // אין גופן מודגש נפרד — מדמים בולד ע"י ציור נוסף בהיסט זעיר
+    if (bold) page.drawText(vis, { x: RIGHT - w + 0.4, y: PAGE_H - y, size, font, color: colour });
   }
-  function drawRight(text, size, gap) {
+  function drawRight(text, size, gap, bold) {
     if (gap) y += gap;
-    put(text, size);
+    put(text, size, bold);
     y += lineH;
   }
   // טקסט ארוך — שבירה לשורות מיושרות לימין
@@ -101,7 +104,7 @@ export async function pensionLetterBlob(info) {
   drawRight("שלום רב,", 11, 10);
   drawWrapped("אני מבקש/ת לעדכן את פרטי המעסיק החדש שלי לצורך המשך ביצוע ההפקדות לחיסכון הפנסיוני הקיים שלי.", 11, 8);
 
-  drawRight("להלן פרטי המעסיק:", 11, 10);
+  drawRight("להלן פרטי המעסיק:", 11, 10, true);
   drawWrapped("שם המעסיק: " + EMPLOYER_NAME, 11, 2);
   drawRight("ח.פ.: " + EMPLOYER_CP, 11);
   drawRight("תיק ניכויים: " + (info.taxFile || ""), 11);
