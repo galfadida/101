@@ -490,17 +490,17 @@ var steps = [
         {k:"decl10",l:"אין מפרישים עבורי לקצבה / לביטוח אובדן כושר עבודה / פיצויים בגין הכנסתי האחרת, או שכל הפרשות המעסיק לקצבה / לביטוח אובדן כושר עבודה / פיצויים בגין הכנסתי האחרת מצורפות להכנסתי האחרת."}]},
 
 /* ---------- section: tax coordination (מיד אחרי ההכנסות הנוספות) ---------- */
-{sec:"תיאום מס", q:function(){return "יש לך תיאום מס?"}, sub:"לא חובה — אפשר להמשיך גם בלי",
+{sec:"תיאום מס", q:function(){return "האם יש לך תיאום מס?"}, sub:"לא חובה — אפשר להמשיך גם בלי",
  when:function(){return s.otherIncome==="yes"},
  choice:{k:"taxCoord", opts:[{v:"yes",l:"כן, יש לי"},{v:"no",l:"אין לי תיאום מס"}]}},
 
-{sec:"תיאום מס", q:function(){return "שים לב 🔴"}, sub:"",
+{sec:"תיאום מס", q:function(){return G("שים לב","שימי לב")+" ⚠️"}, sub:"",
  when:function(){return s.otherIncome==="yes" && s.taxCoord==="no"},
  notice:{kind:"warn", html:function(){
    return "מכיוון שיש לך הכנסה נוספת ואין אישור תיאום מס, "+
-     "<b>אם לא יסופק אישור תיאום מס עד המשכורת הקרובה — יירדו 47% מס מהמשכורת</b>. "+
-     "מומלץ להסדיר תיאום מס בהקדם ולשלוח אותו לכתובת: " +
-     '<a class="mailto" href="mailto:'+HR_MAIL+'">'+HR_MAIL+"</a>"; }}},
+     "<b>אם לא יסופק אישור תיאום מס עד המשכורת הקרובה — יירדו 47% מס מהמשכורת</b>."+
+     '<br><br>מומלץ להסדיר תיאום מס בהקדם ולשלוח אותו לכתובת: ' +
+     '<a class="mailto" style="white-space:nowrap" href="mailto:'+HR_MAIL+'">'+HR_MAIL+"</a>"; }}},
 
 {sec:"תיאום מס", q:function(){return "מה סיבת הבקשה?"}, sub:"",
  when:function(){return s.otherIncome==="yes" && s.taxCoord==="yes"},
@@ -512,7 +512,7 @@ var steps = [
 {sec:"תיאום מס", q:function(){return "פירוט ההכנסות הנוספות"}, sub:"בנוסף להכנסה ממעסיק זה · עד 3 מעסיקים",
  when:function(){return s.otherIncome==="yes" && s.taxCoord==="yes" && s.taxReason==="multi"}, employers:true},
 
-{sec:"תיאום מס", q:function(){return "העלאת אישור תיאום המס"}, sub:"צילום או קובץ PDF של האישור מפקיד השומה — לא חובה, אפשר גם בהמשך",
+{sec:"תיאום מס", q:function(){return "העלאת אישור תיאום המס"}, sub:"צילום או קובץ PDF של האישור מפקיד השומה",
  when:function(){return s.otherIncome==="yes" && s.taxCoord==="yes"},
  upload:{k:"coordFile", l:"צירוף אישור תיאום מס", optional:true}},
 
@@ -1013,10 +1013,9 @@ function buildUpload(host, u){
 /* ---------- children repeater ---------- */
 function buildKids(host){
   var list = el("div","fields");
-  if(!s.kids.length){ s.kids.push({name:"",id:"",birth:"",custody:"",allowance:""}); save(); }
   function draw(){
     list.innerHTML="";
-    if(!s.kids.length) list.appendChild(el("div","empty","עוד לא הוספת ילדים"));
+    if(!s.kids.length) list.appendChild(el("div","empty","עוד לא הוספת ילדים — "+G("הוסף","הוסיפי")+" ילד/ה כדי להמשיך"));
     s.kids.forEach(function(k,idx){
       var c = el("div","card");
       var head = el("div","card-head");
