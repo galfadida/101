@@ -1014,6 +1014,7 @@ function buildUpload(host, u){
 /* ---------- children repeater ---------- */
 function buildKids(host){
   var list = el("div","fields");
+  if(!s.kids.length){ s.kids.push({name:"",id:"",birth:"",custody:"",allowance:""}); save(); }
   function draw(){
     list.innerHTML="";
     if(!s.kids.length) list.appendChild(el("div","empty","עוד לא הוספת ילדים — "+G("הוסף","הוסיפי")+" ילד/ה כדי להמשיך"));
