@@ -59,8 +59,17 @@ export async function pensionLetterBlob(info) {
   const page = doc.addPage([PAGE_W, PAGE_H]);
   const colour = rgb(...INK);
 
-  let y = 70; // מרחק מהראש; גדל כלפי מטה
+  let y = 44; // מרחק מהראש; גדל כלפי מטה
   const lineH = 20;
+
+  // לוגו שאול תמרוקים בראש המסמך, ממורכז
+  try {
+    const { LOGO } = await import("./logo.js");
+    const png = await doc.embedPng(LOGO);
+    const lw = 96, lh = lw * (png.height / png.width);
+    page.drawImage(png, { x: (PAGE_W - lw) / 2, y: PAGE_H - y - lh, width: lw, height: lh });
+    y += lh + 22;
+  } catch (e) { y = 70; }
 
   function put(text, size) {
     // רוחב זהה בין לוגי לחזותי (אותם תווים), לכן מודדים על המקור
@@ -105,10 +114,6 @@ export async function pensionLetterBlob(info) {
   drawRight('שכר מבוטח: 6,000 ש"ח', 11, 10);
 
   drawWrapped("אבקש לעדכן את פרטי המעסיק במערכת ולהמשיך את ההפקדות לקופה הקיימת בהתאם לפרטים המפורטים לעיל.", 11, 12);
-
-  drawRight("מצורפים למסמך זה:", 11, 10);
-  drawRight("אישור קופה פעילה.", 11);
-  drawRight("טופס קוביות (ככל שנדרש)", 11);
 
   drawRight("בברכה,", 11, 16);
   drawRight(name, 11, 2);
