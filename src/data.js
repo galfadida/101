@@ -111,6 +111,44 @@ export async function submitForm(employeeId, answers) {
   );
 }
 
+/* ---------- פנסיה — נשמר בנפרד מטופס 101 ----------
+   כל נתוני חלק הפנסיה נכתבים למסמך נפרד employees/{id}/pension/current
+   ואינם מעורבבים בתוך תשובות טופס 101. */
+const PENSION_DOC = (employeeId) => doc(db, "employees", employeeId, "pension", "current");
+
+export async function loadPension(employeeId) {
+  const snap = await getDoc(PENSION_DOC(employeeId));
+  return snap.exists() ? snap.data() : null;
+}
+export async function savePensionDraft(employeeId, pension) {
+  await setDoc(
+    PENSION_DOC(employeeId),
+    { pension, status: "draft", updatedAt: serverTimestamp() },
+    { merge: true },
+  );
+}
+export async function submitPension(employeeId, pension) {
+  await setDoc(
+    PENSION_DOC(employeeId),
+    { pension, status: "submitted", submittedAt: serverTimestamp(), updatedAt: serverTimestamp() },
+    { merge: true },
+  );
+}
+export function makePensionSaver(employeeId, delay = 1200) {
+  let timer = null, pending = null, inFlight = false;
+  async function flush() {
+    if (!pending || inFlight) return;
+    const payload = pending; pending = null; inFlight = true;
+    try { await savePensionDraft(employeeId, payload); }
+    catch (e) { console.warn("pension draft save failed", e); }
+    finally { inFlight = false; if (pending) flush(); }
+  }
+  return {
+    queue(pension) { pending = pension; clearTimeout(timer); timer = setTimeout(flush, delay); },
+    flushNow() { clearTimeout(timer); return flush(); },
+  };
+}
+
 /** דיבאונס לשמירת טיוטה, כדי לא לכתוב על כל הקשה */
 export function makeDebouncedSaver(employeeId, delay = 1200) {
   let timer = null;

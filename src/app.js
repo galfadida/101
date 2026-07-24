@@ -42,8 +42,14 @@ var s = {
   otherIncome:"", otherKinds:[], creditChoice:"", decl9:false, decl10:false,
   p8:{}, p8f:{},
   taxCoord:"", taxReason:"", employers:[], coordFile:"",
-  signature:"", signDate:"", declConfirmed:false
+  signature:"", signDate:"", declConfirmed:false,
+  // ---- פנסיה (נשמר בנפרד מטופס 101) ----
+  penActive:"", penNoActiveConfirm:false, penActiveConfirm:false,
+  penContinue:"", penContinueConfirm:false,
+  penDocActive:"", penDocCubes:"", penNoDocs:false
 };
+// שדות חלק הפנסיה — נשמרים במסמך נפרד ואינם נכנסים לתשובות טופס 101
+var PENSION_KEYS = ["penActive","penNoActiveConfirm","penActiveConfirm","penContinue","penContinueConfirm","penDocActive","penDocCubes","penNoDocs"];
 var stepIdx = 0;
 
 var FRESH = JSON.parse(JSON.stringify(s));
@@ -74,13 +80,26 @@ function resetAll(){
    מרוחק: טיוטה ל-Firestore בדיבאונס, תחת employees/{id}/form101/current. */
 // שדות רגישים שלא נשמרים ב-localStorage (נשמרים רק ב-Firestore, מוגן בהרשאות)
 var LOCAL_EXCLUDE = ["bankAccount","bankHolder"];
+// תשובות טופס 101 בלבד — ללא שדות הפנסיה (נשמרים בנפרד)
+function formAnswers(){
+  var o = {};
+  for(var k in s){ if(PENSION_KEYS.indexOf(k)===-1) o[k]=s[k]; }
+  return o;
+}
+// נתוני הפנסיה בלבד
+function pensionAnswers(){
+  var o = {};
+  for(var i=0;i<PENSION_KEYS.length;i++){ o[PENSION_KEYS[i]] = s[PENSION_KEYS[i]]; }
+  return o;
+}
 function save(){
   try{
     var local = {};
     for(var k in s){ if(LOCAL_EXCLUDE.indexOf(k)===-1) local[k]=s[k]; }
     localStorage.setItem(STORE, JSON.stringify({s:local,i:stepIdx}));
   }catch(e){}
-  if(remote && remote.saver) remote.saver.queue(s, stepIdx);
+  if(remote && remote.saver) remote.saver.queue(formAnswers(), stepIdx);
+  if(remote && remote.pensionSaver && pensionOn()) remote.pensionSaver.queue(pensionAnswers());
 }
 function load(){
   try{
@@ -92,6 +111,24 @@ function load(){
 
 /* ---------- helpers ---------- */
 function G(m,f){ return s.gender==="f" ? f : m; }
+// גיל נכון להיום, מתוך תאריך לידה ISO (yyyy-mm-dd). null אם אין תאריך תקין.
+function ageToday(iso){
+  if(!iso || String(iso).indexOf("-")<0) return null;
+  var p = String(iso).split("-");
+  var b = new Date(Number(p[0]), Number(p[1])-1, Number(p[2]));
+  if(isNaN(b.getTime())) return null;
+  var t = new Date();
+  var age = t.getFullYear()-b.getFullYear();
+  var mm = t.getMonth()-b.getMonth();
+  if(mm<0 || (mm===0 && t.getDate()<b.getDate())) age--;
+  return age;
+}
+// חובת הפרשה פנסיונית: זכר מגיל 21, נקבה מגיל 20 (נכון להיום)
+function pensionOn(){
+  var age = ageToday(s.birthDate);
+  if(age==null) return false;
+  return s.gender==="f" ? age>=20 : age>=21;
+}
 function el(tag,cls,txt){ var e=document.createElement(tag); if(cls)e.className=cls; if(txt!=null)e.textContent=txt; return e; }
 function esc(v){ return (v==null?"":String(v)); }
 function isDigits(v,n){ return new RegExp("^\\d{"+n+"}$").test(v); }
@@ -522,7 +559,50 @@ var steps = [
  sub:"סמני כל סעיף שנכון לגבייך.", part8:true},
 
 /* ---------- section: signature ---------- */
-{sec:"הצהרה וחתימה", q:function(){return SEED.firstName+", כמעט סיימנו!"}, sub:"נא לקרוא ולחתום", sign:true}
+{sec:"הצהרה וחתימה", q:function(){return SEED.firstName+", כמעט סיימנו!"}, sub:"נא לקרוא ולחתום", sign:true},
+
+/* ==========================================================
+   section: פנסיה — נפרד מטופס 101, מוצג רק לפי גיל וחוק
+   זכר מגיל 21 / נקבה מגיל 20. הנתונים נשמרים בנפרד.
+   ========================================================== */
+{sec:"פנסיה", q:function(){return "האם קיימת לך קופה פנסיונית פעילה שבוצעה אליה הפקדה במהלך 6 החודשים האחרונים?"},
+ sub:"קופה פעילה היא קופה שבוצעה אליה לפחות הפקדה אחת במהלך ששת החודשים האחרונים.",
+ when:function(){return pensionOn()},
+ choice:{k:"penActive", opts:[{v:"yes",l:"כן"},{v:"no",l:"לא"}]}},
+
+// אין קופה פעילה — הודעה + אישור חובה
+{sec:"פנסיה", q:function(){return "אין קופה פנסיונית פעילה"}, sub:"",
+ when:function(){return pensionOn() && s.penActive==="no"},
+ notice:{kind:"info", html:function(){
+   return "על פי המידע שמסרת, אין ברשותך קופה פנסיונית פעילה (לא בוצעה אליה הפקדה במהלך 6 החודשים האחרונים)."+
+     "<br><br>בהתאם לחוק, ההפרשות הפנסיוניות יחלו לאחר 6 חודשי עבודה."; }},
+ flags:[{k:"penNoActiveConfirm", l:G("אני מאשר שאין ברשותי קופה פנסיונית פעילה.","אני מאשרת שאין ברשותי קופה פנסיונית פעילה.")}],
+ require:[{k:"penNoActiveConfirm", msg:"נא לסמן את תיבת האישור כדי להמשיך"}]},
+
+// קיימת קופה פעילה — הודעה + אישור חובה
+{sec:"פנסיה", q:function(){return "קיימת קופה פנסיונית פעילה"}, sub:"",
+ when:function(){return pensionOn() && s.penActive==="yes"},
+ notice:{kind:"info", html:function(){
+   return "על פי המידע שמסרת, קיימת ברשותך קופה פנסיונית פעילה."+
+     "<br><br>בהתאם לחוק, ההפרשות הפנסיוניות יבוצעו לאחר 3 חודשי עבודה, באופן רטרואקטיבי החל מיום תחילת עבודתך."; }},
+ flags:[{k:"penActiveConfirm", l:G("אני מאשר כי בוצעה הפקדה לקופה הפנסיונית שלי במהלך 6 החודשים האחרונים.","אני מאשרת כי בוצעה הפקדה לקופה הפנסיונית שלי במהלך 6 החודשים האחרונים.")}],
+ require:[{k:"penActiveConfirm", msg:"נא לסמן את תיבת האישור כדי להמשיך"}]},
+
+// המשך הפקדה לקופה הקיימת?
+{sec:"פנסיה", q:function(){return "האם ברצונך להמשיך להפקיד לקופה הפנסיונית הקיימת שלך?"}, sub:"",
+ when:function(){return pensionOn() && s.penActive==="yes"},
+ choice:{k:"penContinue", opts:[{v:"yes",l:"כן"},{v:"no",l:"לא"}]}},
+
+// המשך=כן — אישור חובה
+{sec:"פנסיה", q:function(){return "אישור המשך הפקדה"}, sub:"",
+ when:function(){return pensionOn() && s.penActive==="yes" && s.penContinue==="yes"},
+ flags:[{k:"penContinueConfirm", l:G("אני מאשר שברצוני להמשיך להפקיד לקופה הפנסיונית הקיימת שלי.","אני מאשרת שברצוני להמשיך להפקיד לקופה הפנסיונית הקיימת שלי.")}],
+ require:[{k:"penContinueConfirm", msg:"נא לסמן את תיבת האישור כדי להמשיך"}]},
+
+// המשך=כן — העלאת מסמכים
+{sec:"פנסיה", q:function(){return "העלאת מסמכים"}, sub:"אישור קופה פעילה + טופס קוביות · קובץ PDF או תמונה",
+ when:function(){return pensionOn() && s.penActive==="yes" && s.penContinue==="yes"},
+ penDocs:true}
 ];
 
 function req(x){ return String(x||"").trim() ? "" : "נא למלא שדה זה"; }
@@ -682,7 +762,10 @@ function go(delta){
     screen="done"; stepIdx=v.length-1;
     if(remote && remote.submit && !submitted){
       submitted = true;
-      remote.submit(s).catch(function(e){ console.warn("submit failed", e); submitted = false; });
+      remote.submit(formAnswers()).catch(function(e){ console.warn("submit failed", e); submitted = false; });
+      if(remote.pensionSubmit && pensionOn()){
+        remote.pensionSubmit(pensionAnswers()).catch(function(e){ console.warn("pension submit failed", e); });
+      }
     }
   }
   if(stepIdx<0) stepIdx=0;
@@ -765,6 +848,7 @@ function renderStep(){
   if(st.upload)    buildUpload(body, st.upload);
   if(st.part8)     buildPart8(body);
   if(st.bankSummary) buildBankSummary(body);
+  if(st.penDocs)   buildPenDocs(body);
   if(st.sign)      buildSign(body);
 
   var bt = document.getElementById("backTop");
@@ -1050,6 +1134,27 @@ function buildUpload(host, u){
   d.appendChild(el("div","hint","צילום מהטלפון או קובץ PDF"));
   d.appendChild(el("div","err",""));
   host.appendChild(d);
+}
+
+/* ---------- מסך העלאת מסמכי פנסיה ---------- */
+function buildPenDocs(host){
+  var box = el("div","fields");
+  function draw(){
+    box.innerHTML = "";
+    if(!s.penNoDocs){
+      buildUpload(box, {k:"penDocActive", l:"אישור קופה פעילה", optional:true});
+      buildUpload(box, {k:"penDocCubes",  l:"טופס קוביות",      optional:true});
+      box.appendChild(subToggle("אין ברשותי את המסמכים כרגע", false, function(on){ s.penNoDocs=on; save(); draw(); }));
+    } else {
+      box.appendChild(subToggle("אין ברשותי את המסמכים כרגע", true, function(on){ s.penNoDocs=on; save(); draw(); }));
+      var n = el("div","notice info"); n.style.marginTop="12px";
+      n.textContent = "יש להעביר למחלקת השכר אישור קופה פעילה וטופס קוביות בתוך חודש ממועד תחילת עבודתך.";
+      box.appendChild(n);
+    }
+  }
+  draw();
+  host.appendChild(box);
+  host.appendChild(el("div","err",""));
 }
 
 /* ---------- children repeater ---------- */
@@ -1405,6 +1510,15 @@ function collect(st){
     }
   }
   if(st.upload && !st.upload.optional && !s[st.upload.k]) return stepError("נא לצרף את הקובץ כדי להמשיך");
+  if(st.require){
+    for(var ri=0;ri<st.require.length;ri++){
+      if(!s[st.require[ri].k]) return stepError(st.require[ri].msg || "נא לסמן את תיבת האישור כדי להמשיך");
+    }
+  }
+  if(st.penDocs){
+    if(!s.penNoDocs && !s.penDocActive && !s.penDocCubes)
+      return stepError("נא להעלות מסמכים, או לסמן שאין ברשותך אותם כרגע");
+  }
   if(st.bankSummary && !s.bankConfirm){ return fail(host,"bankConfirm","נא לאשר את ההצהרה כדי להמשיך"); }
   if(st.sign && !s.declConfirmed){ return fail(host,"declConfirmed","נא לאשר את ההצהרה לפני הסיום"); }
   if(st.sign && !s.signature){ return fail(host,"signature","נא לחתום לפני הסיום"); }
@@ -1420,7 +1534,7 @@ function renderDone(){
   seal.innerHTML = '<svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>';
   w.appendChild(seal);
   w.appendChild(el("h1",null, "כל הכבוד "+s.firstName+"! 🎉"));
-  w.appendChild(el("p",null, "סיימת למלא טופס 101, כעת נעבור למלא את חוזה העבודה שלך. ממשיכים!"));
+  w.appendChild(el("p",null, "סיימת את התהליך — אפשר להוריד את המסמכים שלך למטה."));
 
   if(s.otherIncome==="yes" && s.taxCoord==="no"){
     var warn = el("div","notice warn");
@@ -1433,49 +1547,24 @@ function renderDone(){
   }
 
   var pdfActions = el("div","nav nav-center");
-  var dl = el("button","btn btn-soft","הורדת הטופס");
+  var dl = el("button","btn btn-soft","הורדת טופס 101");
   dl.type="button";
   dl.onclick = function(){ downloadPdf(dl); };
   pdfActions.appendChild(dl);
   w.appendChild(pdfActions);
 
-  // הכפתור הראשי — מוביל לשלב הבא: חתימה על חוזה עבודה
-  var contractWrap = el("div","nav");
-  var contract = el("button","btn btn-primary btn-next","חתימה על חוזה עבודה ✍️");
-  contract.type="button";
-  contract.onclick = function(){ goToContract(w); };
-  contractWrap.appendChild(contract);
-  w.appendChild(contractWrap);
+  // מסמך פנסיה נפרד — רק אם העובד בחר להמשיך להפקיד לקופה הקיימת
+  if(s.penContinue === "yes"){
+    var penActions = el("div","nav nav-center");
+    var penDl = el("button","btn btn-soft","הורדת מסמך פנסיה");
+    penDl.type="button";
+    penDl.onclick = function(){ downloadPensionPdf(penDl); };
+    penActions.appendChild(penDl);
+    w.appendChild(penActions);
+  }
 
   main.appendChild(w);
   setTimeout(fireConfetti, 220);
-}
-
-/* ---------- שלב הבא: חוזה עבודה (בבנייה) ---------- */
-function goToContract(){
-  topbar.classList.add("hidden");
-  main.innerHTML = "";
-  var w = el("section","done step-anim");
-  var seal = el("div","seal");
-  seal.innerHTML = '<svg viewBox="0 0 24 24"><path d="M9 12h6M9 16h6M9 8h6M6 3h9l3 3v15H6z"/></svg>';
-  w.appendChild(seal);
-  w.appendChild(el("h1",null,"חוזה עבודה"));
-  w.appendChild(el("p",null, "מעולה "+s.firstName+", זה השלב הבא — חתימה על חוזה העבודה שלך בשאול תמרוקים."));
-
-  var note = el("div","notice info");
-  note.style.marginTop="18px";
-  note.textContent = "השלב הזה בבנייה ויתווסף בקרוב.";
-  w.appendChild(note);
-
-  var nav = el("div","nav");
-  var back = el("button","btn btn-primary","חזרה");
-  back.type="button";
-  back.onclick = function(){ render(); };
-  nav.appendChild(back);
-  w.appendChild(nav);
-
-  main.appendChild(w);
-  window.scrollTo(0,0);
 }
 
 /* ---------- confetti ---------- */
@@ -1594,6 +1683,23 @@ function downloadPdf(btn){
   });
 }
 
+function downloadPensionPdf(btn){
+  return withBusy(btn, "מכינים…", function(){
+    return import("./pension-pdf.js").then(function(mod){
+      return mod.pensionLetterBlob({
+        firstName: s.firstName, lastName: s.lastName,
+        idNum: s.idNum, taxFile: EMPLOYER.taxFile,
+      });
+    }).then(function(blob){
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url; a.download = "מסמך_פנסיה_"+s.firstName+"_"+s.lastName+".pdf";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+    });
+  });
+}
+
 function downloadSummary(){
   var rows = [];
   document.querySelectorAll(".summary h2, .summary .sumrow").forEach(function(n){
@@ -1643,7 +1749,10 @@ export function startApp(opts){
   }
 
   if(opts.storeKey) STORE = opts.storeKey;
-  remote = { saver: opts.saver || null, submit: opts.submit || null };
+  remote = {
+    saver: opts.saver || null, submit: opts.submit || null,
+    pensionSaver: opts.pensionSaver || null, pensionSubmit: opts.pensionSubmit || null,
+  };
 
   load();
 
@@ -1653,6 +1762,10 @@ export function startApp(opts){
     stepIdx = opts.draft.stepIndex || 0;
   }
   if(opts.draft && opts.draft.status === "submitted"){ submitted = true; }
+  // טיוטת פנסיה מהענן (מסמך נפרד)
+  if(opts.pensionDraft){
+    for(var pk in opts.pensionDraft){ if(PENSION_KEYS.indexOf(pk)!==-1) s[pk] = opts.pensionDraft[pk]; }
+  }
 
   if(!s.startDate) s.startDate = TODAY_ISO;   // תחילת עבודה — נקבע אוטומטית, לא נשאל
   if(stepIdx>0) screen="welcome";

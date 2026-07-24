@@ -69,6 +69,22 @@ service cloud.firestore {
       ];
     }
 
+    // רשימת השדות היחידים שמותר שיופיעו בנתוני הפנסיה.
+    function allowedPensionKeys() {
+      return [
+        'penActive', 'penNoActiveConfirm', 'penActiveConfirm',
+        'penContinue', 'penContinueConfirm',
+        'penDocActive', 'penDocCubes', 'penNoDocs'
+      ];
+    }
+
+    function validPension(data) {
+      return data.keys().hasOnly(['pension', 'status', 'updatedAt', 'submittedAt'])
+        && data.pension is map
+        && data.pension.keys().hasOnly(allowedPensionKeys())
+        && data.status in ['draft', 'submitted'];
+    }
+
     function validForm(data) {
       return data.keys().hasOnly(['answers', 'stepIndex', 'status', 'updatedAt', 'submittedAt'])
         && data.answers is map
@@ -154,6 +170,26 @@ service cloud.firestore {
             boundTo(employeeId)
             && resource.data.status != 'submitted'
             && validForm(request.resource.data)
+          );
+
+        allow delete: if isAdmin();
+      }
+
+      // ---------- חלק הפנסיה — נשמר בנפרד מטופס 101 ----------
+      // נתוני הפנסיה שהעובד מזין, במסמך נפרד. אותם עקרונות: allowlist נוקשה,
+      // כתיבה רק לעובד הקשור, ונעילה אחרי הגשה סופית.
+      match /pension/{docId} {
+        allow get: if isAdmin() || boundTo(employeeId);
+        allow list: if isAdmin();
+
+        allow create: if isAdmin()
+          || (boundTo(employeeId) && validPension(request.resource.data));
+
+        allow update: if isAdmin()
+          || (
+            boundTo(employeeId)
+            && resource.data.status != 'submitted'
+            && validPension(request.resource.data)
           );
 
         allow delete: if isAdmin();

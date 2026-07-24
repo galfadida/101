@@ -5,6 +5,7 @@ import { LOGO } from "./logo.js";
 import {
   tokenFromUrl, stripTokenFromUrl, openInvite, loadForm,
   makeDebouncedSaver, submitForm, InviteError,
+  loadPension, makePensionSaver, submitPension,
 } from "./data.js";
 
 const main = document.getElementById("main");
@@ -56,24 +57,34 @@ async function boot() {
   }
 
   const { employeeId, profile } = session;
-  const draft = await loadForm(employeeId).catch(() => null);
+  const [draft, pensionDraft] = await Promise.all([
+    loadForm(employeeId).catch(() => null),
+    loadPension(employeeId).catch(() => null),
+  ]);
   const saver = makeDebouncedSaver(employeeId);
+  const pensionSaver = makePensionSaver(employeeId);
 
-  window.addEventListener("pagehide", () => saver.flushNow());
+  window.addEventListener("pagehide", () => { saver.flushNow(); pensionSaver.flushNow(); });
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") saver.flushNow();
+    if (document.visibilityState === "hidden") { saver.flushNow(); pensionSaver.flushNow(); }
   });
 
   startApp({
     profile,
     draft,
     saver,
+    pensionDraft: pensionDraft ? pensionDraft.pension : null,
+    pensionSaver,
     storeKey: "tofes101_" + employeeId,
     submit: async (answers) => {
       await saver.flushNow();
       await submitForm(employeeId, answers);
       // אחרי הגשה אין יותר צורך בטיוטה המקומית — היא מכילה פרטים אישיים
       try { localStorage.removeItem("tofes101_" + employeeId); } catch { /* ignore */ }
+    },
+    pensionSubmit: async (pension) => {
+      await pensionSaver.flushNow();
+      await submitPension(employeeId, pension);
     },
   });
 }
