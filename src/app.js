@@ -1109,7 +1109,7 @@ function buildUpload(host, u){
   inp.onchange = function(){ if(inp.files[0]){ s[u.k]=inp.files[0].name; nameEl.textContent="✓ "+s[u.k]; save(); } };
   wrap.appendChild(btn); wrap.appendChild(inp); wrap.appendChild(nameEl);
   d.appendChild(wrap);
-  d.appendChild(el("div","hint","צילום מהטלפון או קובץ PDF"));
+  if(!u.noHint) d.appendChild(el("div","hint","צילום מהטלפון או קובץ PDF"));
   d.appendChild(el("div","err",""));
   host.appendChild(d);
 }
@@ -1168,20 +1168,8 @@ function buildPenDocs(host){
   host.appendChild(intro);
 
   var box = el("div","fields");
-  function draw(){
-    box.innerHTML = "";
-    if(!s.penNoDocs){
-      buildUpload(box, {k:"penDocActive", l:"אישור קופה פעילה", optional:true});
-      buildUpload(box, {k:"penDocCubes",  l:"טופס קוביות",      optional:true});
-      box.appendChild(subToggle("אין ברשותי את המסמכים כרגע", false, function(on){ s.penNoDocs=on; save(); draw(); }));
-    } else {
-      box.appendChild(subToggle("אין ברשותי את המסמכים כרגע", true, function(on){ s.penNoDocs=on; save(); draw(); }));
-      var n = el("div","notice info"); n.style.marginTop="12px";
-      n.textContent = "יש להעביר למחלקת השכר אישור קופה פעילה וטופס קוביות בתוך חודש ממועד תחילת עבודתך.";
-      box.appendChild(n);
-    }
-  }
-  draw();
+  buildUpload(box, {k:"penDocActive", l:"אישור קופה פעילה", optional:true, noHint:true});
+  buildUpload(box, {k:"penDocCubes",  l:"טופס קוביות",      optional:true, noHint:true});
   host.appendChild(box);
   host.appendChild(el("div","err",""));
 }
@@ -1544,10 +1532,6 @@ function collect(st){
     for(var ri=0;ri<st.require.length;ri++){
       if(!s[st.require[ri].k]) return stepError(st.require[ri].msg || "נא לסמן את תיבת האישור כדי להמשיך");
     }
-  }
-  if(st.penDocs){
-    if(!s.penNoDocs && !s.penDocActive && !s.penDocCubes)
-      return stepError("נא להעלות מסמכים, או לסמן שאין ברשותך אותם כרגע");
   }
   if(st.bankSummary && !s.bankConfirm){ return fail(host,"bankConfirm","נא לאשר את ההצהרה כדי להמשיך"); }
   if(st.sign && !s.declConfirmed){ return fail(host,"declConfirmed","נא לאשר את ההצהרה לפני הסיום"); }
