@@ -10,3 +10,5 @@ service-account*.json
 *-firebase-adminsdk-*.json
 .env
 .env.*
+scratch_zip/
+scripts/.zipcache/
