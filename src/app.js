@@ -348,8 +348,7 @@ var steps = [
 
 {sec:"פרטי חשבון בנק", q:function(){return "לאיזה חשבון בנק להעביר את המשכורת? 💰"}, sub:"הפרטים ישמשו להעברת שכר בלבד",
  fields:[
-   {k:"bankHolder",l:"שם בעל החשבון",type:"text",v:req,
-    prefill:function(){return (s.firstName+" "+s.lastName).trim();}},
+   {k:"bankHolder",l:"שם בעל החשבון",type:"text",v:req},
    {k:"bankCode",l:"בנק",bank:true,v:function(x){return String(x||"").trim()?"":"נא לבחור בנק מהרשימה";},
     ph:"בחירת בנק מהרשימה"},
    {k:"bankBranch",l:"סניף",branchCombo:true,half:true,ph:"מספר או שם הסניף",
