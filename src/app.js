@@ -518,7 +518,7 @@ var steps = [
 
 /* ---------- section: part 8 ---------- */
 {sec:"פטור וזיכוי ממס", q:function(){return G("אני מבקש פטור או זיכוי ממס מהסיבות הבאות:","אני מבקשת פטור או זיכוי ממס מהסיבות הבאות:")},
- sub:"סמני כל סעיף שנכון לגבייך. הנוסח מופיע כלשונו בטופס הרשמי.", part8:true},
+ sub:"סמני כל סעיף שנכון לגבייך.", part8:true},
 
 /* ---------- section: signature ---------- */
 {sec:"הצהרה וחתימה", q:function(){return SEED.firstName+", כמעט סיימנו!"}, sub:"נא לקרוא ולחתום", sign:true}
@@ -1023,7 +1023,15 @@ function buildKids(host){
       var head = el("div","card-head");
       head.appendChild(el("h3",null,"ילד/ה "+(idx+1)));
       var del = el("button","link-danger","הסרה"); del.type="button";
-      del.onclick = function(){ s.kids.splice(idx,1); save(); draw(); };
+      del.onclick = function(){
+        s.kids.splice(idx,1);
+        if(!s.kids.length){            // הוסר הילד האחרון — חוזרים לשאלת "יש לך ילדים?"
+          s.hasKids = "";
+          stepIdx = Math.max(0, stepIdx-1);
+          save(); render(); scrollTop(); return;
+        }
+        save(); draw();
+      };
       head.appendChild(del);
       c.appendChild(head);
 
@@ -1381,7 +1389,7 @@ function renderDone(){
     w.appendChild(warn);
   }
 
-  var pdfActions = el("div","nav");
+  var pdfActions = el("div","nav nav-center");
   var dl = el("button","btn btn-soft","הורדת הטופס");
   dl.type="button";
   dl.onclick = function(){ downloadPdf(dl); };
