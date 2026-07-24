@@ -1981,6 +1981,11 @@ export function startApp(opts){
   if(opts.jumpPension || opts.jumpContract){
     if(!s.gender) s.gender = SEED.gender || "f";
     if(!s.birthDate) s.birthDate = "1990-05-05";
+    // נתוני דוגמה כדי שהמסכים ייראו מלאים בבדיקה (בזרימה האמיתית מגיעים מטופס 101)
+    if(!s.idNum) s.idNum = "123456782";
+    if(!s.street) s.street = "דיזנגוף";
+    if(!s.houseNo) s.houseNo = "100";
+    if(!s.city) s.city = "תל אביב יפו";
     var flag = opts.jumpContract ? "contract" : "penActive";
     var vj = visible(), pi = -1;
     for(var ji=0; ji<vj.length; ji++){ if(vj[ji][flag]){ pi = ji; break; } }
