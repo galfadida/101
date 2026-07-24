@@ -232,6 +232,18 @@ service cloud.firestore {
       }
     }
 
+    // ---------- פלטפורמת TS: עסקים ----------
+    // בשלב זה — אדמין-על בלבד (superAdmin claim). בהמשך יתווסף שיוך צוות-עסק.
+    function isSuperAdmin() {
+      return request.auth != null && request.auth.token.superAdmin == true;
+    }
+    match /businesses/{businessId} {
+      allow read, write: if isSuperAdmin();
+      match /{document=**} {
+        allow read, write: if isSuperAdmin();
+      }
+    }
+
     // ---------- ברירת מחדל: הכול חסום ----------
     match /{document=**} {
       allow read, write: if false;
