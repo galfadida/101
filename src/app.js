@@ -1782,8 +1782,18 @@ export function startApp(opts){
   }
 
   if(!s.startDate) s.startDate = TODAY_ISO;   // תחילת עבודה — נקבע אוטומטית, לא נשאל
-  if(stepIdx>0) screen="welcome";
-  if(submitted) screen="done";
+
+  // קיצור בדיקה: קפיצה ישירה לחלק הפנסיה (?pension בקישור)
+  if(opts.jumpPension){
+    if(!s.gender) s.gender = SEED.gender || "f";
+    if(!s.birthDate) s.birthDate = "1990-05-05";   // מבוגר/ת, כדי שחלק הפנסיה יופיע
+    var vj = visible(), pi = -1;
+    for(var ji=0; ji<vj.length; ji++){ if(vj[ji].penActive){ pi = ji; break; } }
+    if(pi >= 0){ stepIdx = pi; screen = "form"; submitted = false; }
+  } else {
+    if(stepIdx>0) screen="welcome";
+    if(submitted) screen="done";
+  }
   render();
 }
 

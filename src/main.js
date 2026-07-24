@@ -69,10 +69,13 @@ async function boot() {
     if (document.visibilityState === "hidden") { saver.flushNow(); pensionSaver.flushNow(); }
   });
 
+  const jumpPension = new URLSearchParams(location.search).has("pension");
+
   startApp({
     profile,
     draft,
     saver,
+    jumpPension,
     pensionDraft: pensionDraft ? pensionDraft.pension : null,
     pensionSaver,
     storeKey: "tofes101_" + employeeId,
