@@ -618,8 +618,8 @@ function wireBankHelp(wrap){
   var card = el("button","bank-help-card"); card.type = "button";
   card.innerHTML =
     '<span class="bank-help-ic">📄</span>'+
-    '<span class="bank-help-txt">לא בטוחים בפרטי החשבון? עדיף להוציא <b>אישור ניהול חשבון</b>'+
-    ' — <span class="bank-help-cta">למדריך לחצו כאן »</span></span>';
+    '<span class="bank-help-txt">'+G("לא בטוח","לא בטוחה")+' בפרטי החשבון? עדיף להוציא <b>אישור ניהול חשבון</b>'+
+    ' — <span class="bank-help-cta">'+G("למדריך לחץ כאן","למדריך לחצי כאן")+' »</span></span>';
   card.onclick = openAccountCertHelp;
   var body = wrap.querySelector(".fields");
   if(body) wrap.insertBefore(card, body); else wrap.appendChild(card);
