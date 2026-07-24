@@ -1116,8 +1116,8 @@ function buildUpload(host, u){
 
 /* ---------- שאלת קופה פעילה + קוביה inline ---------- */
 function buildPenActive(host){
-  // צביעת המילה "פעילה" בכותרת השאלה
-  var q = main.querySelector("h1.q");
+  // צביעת המילה "פעילה" בכותרת השאלה (ה-wrap עדיין לא ב-main בשלב זה, לכן דרך host.parentNode)
+  var q = host.parentNode ? host.parentNode.querySelector("h1.q") : null;
   if(q) q.innerHTML = 'האם קיימת לך קופה פנסיונית <span class="hl">פעילה</span> שבוצעה אליה הפקדה במהלך 6 החודשים האחרונים?';
 
   var box = el("div","choices");
