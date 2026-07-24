@@ -1173,13 +1173,19 @@ function buildContract(host){
   card.appendChild(sigrow);
   host.appendChild(card);
 
-  // אישור חובה
+  // הודעה מנחה — יש לגלול עד סוף ההסכם כדי לאשר
+  var scrollNote = el("div","scroll-note","↓ יש לגלול עד סוף ההסכם כדי לאשר");
+  host.appendChild(scrollNote);
+
+  // אישור חובה — נעול עד שגוללים את כל המסמך
+  var readEnd = false;
   var awrap = el("div","field"); awrap.dataset.key = "contractApproved";
-  var ab = el("button","choice sq decl-check"); ab.type="button";
+  var ab = el("button","choice sq decl-check locked"); ab.type="button";
   ab.setAttribute("role","checkbox"); ab.setAttribute("aria-checked", s.contractApproved?"true":"false");
   ab.appendChild(el("span","dot"));
   ab.appendChild(el("span","txt", G("קראתי את ההסכם, הבנתי אותו ואני מאשר את תוכנו.","קראתי את ההסכם, הבנתי אותו ואני מאשרת את תוכנו.")));
   ab.onclick = function(){
+    if(!readEnd){ scrollNote.classList.add("shake"); card.scrollBy({top:120,behavior:"smooth"}); setTimeout(function(){scrollNote.classList.remove("shake");},500); return; }
     s.contractApproved = !s.contractApproved;
     ab.setAttribute("aria-checked", s.contractApproved?"true":"false");
     awrap.classList.remove("bad"); save(); updateLock();
@@ -1187,6 +1193,20 @@ function buildContract(host){
   awrap.appendChild(ab);
   awrap.appendChild(el("div","err",""));
   host.appendChild(awrap);
+
+  function unlockApprove(){
+    if(readEnd) return;
+    readEnd = true;
+    ab.classList.remove("locked");
+    scrollNote.style.display = "none";
+  }
+  card.addEventListener("scroll", function(){
+    if(card.scrollHeight - card.scrollTop - card.clientHeight < 28) unlockApprove();
+  });
+  // אם המסמך קצר מהחלון (אין מה לגלול) או שכבר אושר — פותחים מיד
+  setTimeout(function(){
+    if(s.contractApproved || card.scrollHeight - card.clientHeight < 12) unlockApprove();
+  }, 60);
 
   // חתימה
   var f = el("div","field"); f.dataset.key = "contractSignature";

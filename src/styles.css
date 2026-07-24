@@ -154,6 +154,11 @@ input::placeholder{color:var(--muted)}
 .contract-sigrow{display:flex;gap:16px;margin-top:20px}
 .contract-sigcell{flex:1;text-align:center;border-top:1px solid var(--line-2);
   padding-top:6px;color:var(--muted);font-weight:600}
+.scroll-note{text-align:center;color:var(--gold);font-weight:600;font-size:14px;margin:12px 0 2px}
+.scroll-note.shake{animation:snShake .45s}
+@keyframes snShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.choice.sq.locked{opacity:.5}
+@media (prefers-reduced-motion: reduce){ .scroll-note.shake{animation:none} }
 .seg{display:flex;gap:10px}
 .seg-btn{flex:1;padding:13px;border:1px solid var(--line-2);background:var(--surface);border-radius:11px;
   font:inherit;font-size:17px;color:var(--ink-2);cursor:pointer;transition:border-color .15s,background .15s}
