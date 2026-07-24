@@ -1168,6 +1168,13 @@ function buildPenDocs(host){
   intro.style.marginBottom = "6px";
   host.appendChild(intro);
 
+  var give = el("div","notice info");
+  give.innerHTML =
+    'בנוסף — בסיום התהליך יופק עבורכם <span class="hl">מסמך פנסיה</span> להעברה לחברת הביטוח / החברה המנהלת של הקופה.' +
+    '<br>המסמך כולל את כל פרטי ההפקדה החדשה, ויש להעביר אותו אליהם לעדכון המעסיק החדש והמשך ההפקדות.';
+  give.style.marginBottom = "6px";
+  host.appendChild(give);
+
   var box = el("div","fields");
   buildUpload(box, {k:"penDocActive", l:"אישור קופה פעילה", optional:true, noHint:true});
   buildUpload(box, {k:"penDocCubes",  l:"טופס קוביות",      optional:true, noHint:true});
