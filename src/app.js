@@ -1,7 +1,7 @@
 import { ADDR_BLOB } from "./addr.js";
 import { LOGO } from "./logo.js";
 import { lookupZip } from "./geocode.js";
-import { localZip } from "./zipdb.js";
+import { localZip, localZipApprox } from "./zipdb.js";
 import { BANKS, bankByCode, bankLabel, bankFromLabel, validate as validateBank } from "./bank.js";
 import { BRANCHES_BY_BANK } from "./branches.js";
 
@@ -550,9 +550,11 @@ function wireZipLookup(wrap){
     if(!s.city || !s.street || !s.houseNo || key === lastTried) return;
     lastTried = key;
     if(hint) hint.textContent = "מחפשים את המיקוד…";
-    // קודם המאגר הרשמי המקומי (מדויק ברמת-בית), ואם אין — Geocoder של גוגל
+    // 1) התאמת בית מדויקת מהמאגר הרשמי · 2) גוגל (עדכני) · 3) הערכת שכן קרוב
     localZip(s.city, s.street, s.houseNo).then(function(z){
       return z || lookupZip(s.city, s.street, s.houseNo);
+    }).then(function(z){
+      return z || localZipApprox(s.city, s.street, s.houseNo);
     }).then(function(zip){
       if(zip && !manual){
         s.zip = zip;

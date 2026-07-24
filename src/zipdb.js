@@ -32,15 +32,18 @@ function norm(s) {
   return s;
 }
 
-function pick(houseMap, house) {
+function valid(z) { return z && z.length === 7 && z !== "0000000"; }
+
+function houseMapOf(db, city, street) {
+  const ck = norm(city), sk = norm(street);
+  if (!ck || !sk) return null;
+  return db.addr[ck + "|" + sk] || null;
+}
+
+// שכן קרוב באותה זוגיות (אותו צד של הרחוב) — לרוב אותו מיקוד, אך לא ודאי.
+function nearest(houseMap, house) {
   const h = parseInt(String(house).replace(/\D/g, ""), 10);
-  if (!isFinite(h)) {
-    // אין מספר בית תקין — נחזיר את המיקוד הראשון אם קיים
-    const first = Object.values(houseMap)[0];
-    return first || "";
-  }
-  if (houseMap[h] != null) return houseMap[h];
-  // שכן קרוב באותה זוגיות (אותו צד של הרחוב) — לרוב אותו מיקוד
+  if (!isFinite(h)) { const f = Object.values(houseMap)[0]; return f || ""; }
   let best = "", bestDist = Infinity, anyBest = "", anyDist = Infinity;
   for (const k in houseMap) {
     const hk = parseInt(k, 10);
@@ -53,26 +56,43 @@ function pick(houseMap, house) {
 }
 
 /**
- * מחזיר מיקוד בן 7 ספרות מהמאגר המקומי, או "" אם אין התאמה.
- * לעולם אינו זורק.
+ * מיקוד ודאי בלבד: התאמה מדויקת של מספר הבית, או מיקוד יחיד ליישוב קטן.
+ * מחזיר "" אם אין התאמה מדויקת — כדי שהקורא ינסה את גוגל (עדכני יותר).
  */
 export async function localZip(city, street, house) {
   try {
     const db = await load();
     if (!db) return "";
-    const ck = norm(city), sk = norm(street);
+    const ck = norm(city);
     if (!ck) return "";
-    const d = sk ? db.addr[ck + "|" + sk] : null;
+    const d = houseMapOf(db, city, street);
     if (d) {
-      const z = pick(d, house);
-      if (z && z.length === 7 && z !== "0000000") return z;
+      const h = parseInt(String(house).replace(/\D/g, ""), 10);
+      if (isFinite(h) && valid(d[h])) return d[h];   // התאמת בית מדויקת בלבד
     }
-    // ברירת מחדל עירונית (יישוב עם מיקוד יחיד)
-    const cz = db.cityZip[ck];
-    if (cz && cz.length === 7 && cz !== "0000000") return cz;
+    const cz = db.cityZip[ck];                        // יישוב עם מיקוד יחיד — ודאי
+    if (valid(cz)) return cz;
     return "";
   } catch (e) {
     console.warn("localZip failed", e);
+    return "";
+  }
+}
+
+/**
+ * הערכה: שכן קרוב באותו רחוב. משמש רק כמוצא אחרון, אחרי שגם גוגל נכשל.
+ */
+export async function localZipApprox(city, street, house) {
+  try {
+    const db = await load();
+    if (!db) return "";
+    const d = houseMapOf(db, city, street);
+    if (d) {
+      const z = nearest(d, house);
+      if (valid(z)) return z;
+    }
+    return "";
+  } catch (e) {
     return "";
   }
 }
