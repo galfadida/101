@@ -20,6 +20,8 @@ const EMPLOYEE = {
   gender: "f",
   branch: "בר אילן",
   mobile: "0546389555",
+  hourlyWage: "35",          // שכר לשעה — המעסיק קובע
+  role: "מוכרן/ית",          // תפקיד — המעסיק קובע
 };
 
 const sa = JSON.parse(readFileSync(KEY_PATH, "utf8"));

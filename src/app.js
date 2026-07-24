@@ -2,6 +2,7 @@ import { ADDR_BLOB } from "./addr.js";
 import { LOGO } from "./logo.js";
 import { lookupZip } from "./geocode.js";
 import { localZip, localZipApprox } from "./zipdb.js";
+import { buildContractDoc } from "./contract-content.js";
 import { BANKS, bankByCode, bankLabel, bankFromLabel, validate as validateBank } from "./bank.js";
 import { BRANCHES_BY_BANK } from "./branches.js";
 
@@ -14,7 +15,9 @@ var SEED = {
   lastName:  "פדידה",
   gender:    "f",            // f / m
   mobile:    "0546389555",
-  branch:    "בר אילן"
+  branch:    "בר אילן",
+  hourlyWage: "",            // שכר לשעה — המעסיק מזין ביצירת העובד
+  role:       ""             // תפקיד — המעסיק מזין ביצירת העובד
 };
 var remote = null;           // { employeeId, saver, submit }  — נקבע ב-startApp
 var EMPLOYER = {
@@ -46,10 +49,14 @@ var s = {
   // ---- פנסיה (נשמר בנפרד מטופס 101) ----
   penActive:"", penNoActiveConfirm:false, penActiveConfirm:false,
   penContinue:"", penContinueConfirm:false,
-  penDocActive:"", penDocCubes:"", penNoDocs:false
+  penDocActive:"", penDocCubes:"", penNoDocs:false,
+  // ---- חוזה עבודה (נשמר בנפרד) ----
+  contractApproved:false, contractSignature:"", contractSignDate:""
 };
 // שדות חלק הפנסיה — נשמרים במסמך נפרד ואינם נכנסים לתשובות טופס 101
 var PENSION_KEYS = ["penActive","penNoActiveConfirm","penActiveConfirm","penContinue","penContinueConfirm","penDocActive","penDocCubes","penNoDocs"];
+// שדות חוזה העבודה — נשמרים במסמך נפרד ואינם נכנסים לתשובות טופס 101
+var CONTRACT_KEYS = ["contractApproved","contractSignature","contractSignDate"];
 var stepIdx = 0;
 
 var FRESH = JSON.parse(JSON.stringify(s));
@@ -80,16 +87,22 @@ function resetAll(){
    מרוחק: טיוטה ל-Firestore בדיבאונס, תחת employees/{id}/form101/current. */
 // שדות רגישים שלא נשמרים ב-localStorage (נשמרים רק ב-Firestore, מוגן בהרשאות)
 var LOCAL_EXCLUDE = ["bankAccount","bankHolder"];
-// תשובות טופס 101 בלבד — ללא שדות הפנסיה (נשמרים בנפרד)
+// תשובות טופס 101 בלבד — ללא שדות הפנסיה והחוזה (נשמרים בנפרד)
 function formAnswers(){
   var o = {};
-  for(var k in s){ if(PENSION_KEYS.indexOf(k)===-1) o[k]=s[k]; }
+  for(var k in s){ if(PENSION_KEYS.indexOf(k)===-1 && CONTRACT_KEYS.indexOf(k)===-1) o[k]=s[k]; }
   return o;
 }
 // נתוני הפנסיה בלבד
 function pensionAnswers(){
   var o = {};
   for(var i=0;i<PENSION_KEYS.length;i++){ o[PENSION_KEYS[i]] = s[PENSION_KEYS[i]]; }
+  return o;
+}
+// נתוני חוזה העבודה בלבד
+function contractAnswers(){
+  var o = {};
+  for(var i=0;i<CONTRACT_KEYS.length;i++){ o[CONTRACT_KEYS[i]] = s[CONTRACT_KEYS[i]]; }
   return o;
 }
 function save(){
@@ -100,6 +113,7 @@ function save(){
   }catch(e){}
   if(remote && remote.saver) remote.saver.queue(formAnswers(), stepIdx);
   if(remote && remote.pensionSaver && pensionOn()) remote.pensionSaver.queue(pensionAnswers());
+  if(remote && remote.contractSaver) remote.contractSaver.queue(contractAnswers());
 }
 function load(){
   try{
@@ -579,7 +593,10 @@ var steps = [
 // המשך=כן — העלאת מסמכים
 {sec:"פנסיה", q:function(){return "העלאת מסמכים"}, sub:"",
  when:function(){return pensionOn() && s.penActive==="yes" && s.penContinue==="yes"},
- penDocs:true}
+ penDocs:true},
+
+/* ---------- section: חוזה עבודה (נפרד מטופס 101) ---------- */
+{sec:"חוזה עבודה", q:function(){return "חוזה עבודה"}, sub:"נא לקרוא את ההסכם במלואו, לאשר ולחתום", contract:true}
 ];
 
 function req(x){ return String(x||"").trim() ? "" : "נא למלא שדה זה"; }
@@ -743,6 +760,9 @@ function go(delta){
       if(remote.pensionSubmit && pensionOn()){
         remote.pensionSubmit(pensionAnswers()).catch(function(e){ console.warn("pension submit failed", e); });
       }
+      if(remote.contractSubmit){
+        remote.contractSubmit(contractAnswers()).catch(function(e){ console.warn("contract submit failed", e); });
+      }
     }
   }
   if(stepIdx<0) stepIdx=0;
@@ -827,6 +847,7 @@ function renderStep(){
   if(st.bankSummary) buildBankSummary(body);
   if(st.penActive) buildPenActive(body);
   if(st.penDocs)   buildPenDocs(body);
+  if(st.contract)  buildContract(body);
   if(st.sign)      buildSign(body);
 
   var bt = document.getElementById("backTop");
@@ -843,7 +864,7 @@ function renderStep(){
     back.onclick = function(){ go(-1); };
     nav.appendChild(back);
   }
-  var next = el("button","btn btn-primary", st.sign ? "סיום ושליחה" : "המשך");
+  var next = el("button","btn btn-primary", (st.sign || st.contract) ? "סיום ושליחה" : "המשך");
   next.onclick = function(){ go(1); };
   nav.appendChild(next);
   wrap.appendChild(nav);
@@ -1112,6 +1133,112 @@ function buildUpload(host, u){
   if(!u.noHint) d.appendChild(el("div","hint","צילום מהטלפון או קובץ PDF"));
   d.appendChild(el("div","err",""));
   host.appendChild(d);
+}
+
+/* ---------- חוזה עבודה: מסמך לגלילה + אישור + חתימה ---------- */
+function buildContract(host){
+  var data = {
+    empName: (s.firstName+" "+s.lastName).trim(),
+    empId: s.idNum,
+    empAddr: ((s.street||"")+" "+(s.houseNo||"")).trim() + (s.city ? ", "+s.city : ""),
+    startDate: fmtDate(s.startDate),
+    wage: SEED.hourlyWage,
+    role: SEED.role,
+    today: fmtDate(new Date().toISOString().slice(0,10)),
+    year: new Date().getFullYear(),
+  };
+  var doc = buildContractDoc(data);
+
+  var card = el("div","contract-doc");
+  var lg = el("img","contract-logo"); lg.src = LOGO; lg.alt = "שאול תמרוקים";
+  card.appendChild(lg);
+  card.appendChild(el("h2","contract-title", doc.title));
+
+  doc.preamble.forEach(function(p){
+    var e = el("p","contract-pre"+(p.strong?" strong":""), p.t);
+    card.appendChild(e);
+  });
+
+  doc.sections.forEach(function(sec){
+    card.appendChild(el("h3","contract-h", sec.n+". "+sec.title));
+    sec.items.forEach(function(it, i){
+      card.appendChild(el("p","contract-cl", sec.n+"."+(i+1)+"  "+it));
+    });
+  });
+
+  card.appendChild(el("p","contract-close", doc.closing));
+  var sigrow = el("div","contract-sigrow");
+  sigrow.appendChild(el("div","contract-sigcell","המעסיק"));
+  sigrow.appendChild(el("div","contract-sigcell","העובד"));
+  card.appendChild(sigrow);
+  host.appendChild(card);
+
+  // אישור חובה
+  var awrap = el("div","field"); awrap.dataset.key = "contractApproved";
+  var ab = el("button","choice sq decl-check"); ab.type="button";
+  ab.setAttribute("role","checkbox"); ab.setAttribute("aria-checked", s.contractApproved?"true":"false");
+  ab.appendChild(el("span","dot"));
+  ab.appendChild(el("span","txt", G("קראתי את ההסכם, הבנתי אותו ואני מאשר את תוכנו.","קראתי את ההסכם, הבנתי אותו ואני מאשרת את תוכנו.")));
+  ab.onclick = function(){
+    s.contractApproved = !s.contractApproved;
+    ab.setAttribute("aria-checked", s.contractApproved?"true":"false");
+    awrap.classList.remove("bad"); save(); updateLock();
+  };
+  awrap.appendChild(ab);
+  awrap.appendChild(el("div","err",""));
+  host.appendChild(awrap);
+
+  // חתימה
+  var f = el("div","field"); f.dataset.key = "contractSignature";
+  f.appendChild(el("label",null,"חתימת העובד"));
+  var wrap = el("div","sigwrap");
+  var cv = document.createElement("canvas");
+  wrap.appendChild(cv);
+  wrap.appendChild(el("div","sigline"));
+  wrap.appendChild(el("div","sighint", G("חתום כאן באצבע או בעכבר","חתמי כאן באצבע או בעכבר")));
+  wrap.appendChild(el("div","siglock","יש לאשר את ההסכם למעלה כדי לחתום"));
+  f.appendChild(wrap);
+  f.appendChild(el("div","err",""));
+  host.appendChild(f);
+
+  var actions = el("div","file");
+  var clear = el("button","btn btn-soft btn-sm","ניקוי החתימה"); clear.type="button";
+  actions.appendChild(clear);
+  actions.appendChild(el("span","hint","תאריך: "+fmtDate(new Date().toISOString().slice(0,10))));
+  host.appendChild(actions);
+
+  function updateLock(){ wrap.classList.toggle("locked", !s.contractApproved); }
+
+  var ctx, drawing=false, last=null;
+  function setup(){
+    var rect = wrap.getBoundingClientRect();
+    var dpr = window.devicePixelRatio||1;
+    cv.width = Math.round(rect.width*dpr); cv.height = Math.round(190*dpr);
+    ctx = cv.getContext("2d"); if(!ctx) return;
+    ctx.scale(dpr,dpr);
+    ctx.lineWidth = 2.2; ctx.lineCap="round"; ctx.lineJoin="round";
+    ctx.strokeStyle = getComputedStyle(document.body).color;
+    if(s.contractSignature){
+      var img = new Image();
+      img.onload = function(){ ctx.drawImage(img,0,0,rect.width,190); };
+      img.src = s.contractSignature; wrap.classList.add("signed");
+    }
+  }
+  function pos(e){ var r=cv.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; }
+  cv.addEventListener("pointerdown",function(e){
+    if(!ctx) return;
+    if(!s.contractApproved){ e.preventDefault(); awrap.classList.add("bad"); awrap.scrollIntoView({block:"center",behavior:"smooth"}); return; }
+    e.preventDefault(); if(cv.setPointerCapture) cv.setPointerCapture(e.pointerId);
+    drawing=true; wrap.classList.add("signed"); last=pos(e); ctx.beginPath(); ctx.moveTo(last.x,last.y);
+  });
+  cv.addEventListener("pointermove",function(e){ if(!drawing) return; e.preventDefault(); var p=pos(e); ctx.lineTo(p.x,p.y); ctx.stroke(); last=p; });
+  function end(){ if(!drawing) return; drawing=false;
+    try{ s.contractSignature = cv.toDataURL("image/png"); s.contractSignDate = new Date().toISOString().slice(0,10); save(); }catch(e){}
+    f.classList.remove("bad");
+  }
+  cv.addEventListener("pointerup",end); cv.addEventListener("pointercancel",end); cv.addEventListener("pointerleave",end);
+  clear.onclick = function(){ ctx.clearRect(0,0,cv.width,cv.height); wrap.classList.remove("signed"); s.contractSignature=""; save(); };
+  setTimeout(function(){ setup(); updateLock(); },0);
 }
 
 /* ---------- שאלת קופה פעילה + קוביה inline ---------- */
@@ -1544,6 +1671,8 @@ function collect(st){
   if(st.bankSummary && !s.bankConfirm){ return fail(host,"bankConfirm","נא לאשר את ההצהרה כדי להמשיך"); }
   if(st.sign && !s.declConfirmed){ return fail(host,"declConfirmed","נא לאשר את ההצהרה לפני הסיום"); }
   if(st.sign && !s.signature){ return fail(host,"signature","נא לחתום לפני הסיום"); }
+  if(st.contract && !s.contractApproved){ return fail(host,"contractApproved","נא לאשר את ההסכם כדי להמשיך"); }
+  if(st.contract && !s.contractSignature){ return fail(host,"contractSignature","נא לחתום על ההסכם כדי להמשיך"); }
   return true;
 }
 
@@ -1760,6 +1889,8 @@ export function startApp(opts){
     SEED.gender    = opts.profile.gender    || SEED.gender;
     SEED.branch    = opts.profile.branch    || SEED.branch;
     SEED.mobile    = opts.profile.mobile    || SEED.mobile;
+    SEED.hourlyWage = opts.profile.hourlyWage || SEED.hourlyWage;
+    SEED.role       = opts.profile.role       || SEED.role;
     s.firstName = SEED.firstName;
     s.lastName  = SEED.lastName;
     s.gender    = SEED.gender;
@@ -1774,6 +1905,7 @@ export function startApp(opts){
   remote = {
     saver: opts.saver || null, submit: opts.submit || null,
     pensionSaver: opts.pensionSaver || null, pensionSubmit: opts.pensionSubmit || null,
+    contractSaver: opts.contractSaver || null, contractSubmit: opts.contractSubmit || null,
   };
 
   load();
@@ -1788,15 +1920,20 @@ export function startApp(opts){
   if(opts.pensionDraft){
     for(var pk in opts.pensionDraft){ if(PENSION_KEYS.indexOf(pk)!==-1) s[pk] = opts.pensionDraft[pk]; }
   }
+  // טיוטת חוזה מהענן (מסמך נפרד)
+  if(opts.contractDraft){
+    for(var ck in opts.contractDraft){ if(CONTRACT_KEYS.indexOf(ck)!==-1) s[ck] = opts.contractDraft[ck]; }
+  }
 
   if(!s.startDate) s.startDate = TODAY_ISO;   // תחילת עבודה — נקבע אוטומטית, לא נשאל
 
-  // קיצור בדיקה: קפיצה ישירה לחלק הפנסיה (?pension בקישור)
-  if(opts.jumpPension){
+  // קיצור בדיקה: קפיצה ישירה לחלק הפנסיה (?pension) או לחוזה (?contract)
+  if(opts.jumpPension || opts.jumpContract){
     if(!s.gender) s.gender = SEED.gender || "f";
-    if(!s.birthDate) s.birthDate = "1990-05-05";   // מבוגר/ת, כדי שחלק הפנסיה יופיע
+    if(!s.birthDate) s.birthDate = "1990-05-05";
+    var flag = opts.jumpContract ? "contract" : "penActive";
     var vj = visible(), pi = -1;
-    for(var ji=0; ji<vj.length; ji++){ if(vj[ji].penActive){ pi = ji; break; } }
+    for(var ji=0; ji<vj.length; ji++){ if(vj[ji][flag]){ pi = ji; break; } }
     if(pi >= 0){ stepIdx = pi; screen = "form"; submitted = false; }
   } else {
     if(stepIdx>0) screen="welcome";

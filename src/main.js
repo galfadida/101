@@ -6,6 +6,7 @@ import {
   tokenFromUrl, stripTokenFromUrl, openInvite, loadForm,
   makeDebouncedSaver, submitForm, InviteError,
   loadPension, makePensionSaver, submitPension,
+  loadContract, makeContractSaver, submitContract,
 } from "./data.js";
 
 const main = document.getElementById("main");
@@ -57,27 +58,34 @@ async function boot() {
   }
 
   const { employeeId, profile } = session;
-  const [draft, pensionDraft] = await Promise.all([
+  const [draft, pensionDraft, contractDraft] = await Promise.all([
     loadForm(employeeId).catch(() => null),
     loadPension(employeeId).catch(() => null),
+    loadContract(employeeId).catch(() => null),
   ]);
   const saver = makeDebouncedSaver(employeeId);
   const pensionSaver = makePensionSaver(employeeId);
+  const contractSaver = makeContractSaver(employeeId);
 
-  window.addEventListener("pagehide", () => { saver.flushNow(); pensionSaver.flushNow(); });
+  window.addEventListener("pagehide", () => { saver.flushNow(); pensionSaver.flushNow(); contractSaver.flushNow(); });
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") { saver.flushNow(); pensionSaver.flushNow(); }
+    if (document.visibilityState === "hidden") { saver.flushNow(); pensionSaver.flushNow(); contractSaver.flushNow(); }
   });
 
-  const jumpPension = new URLSearchParams(location.search).has("pension");
+  const params = new URLSearchParams(location.search);
+  const jumpPension = params.has("pension");
+  const jumpContract = params.has("contract");
 
   startApp({
     profile,
     draft,
     saver,
     jumpPension,
+    jumpContract,
     pensionDraft: pensionDraft ? pensionDraft.pension : null,
     pensionSaver,
+    contractDraft: contractDraft ? contractDraft.contract : null,
+    contractSaver,
     storeKey: "tofes101_" + employeeId,
     submit: async (answers) => {
       await saver.flushNow();
@@ -88,6 +96,10 @@ async function boot() {
     pensionSubmit: async (pension) => {
       await pensionSaver.flushNow();
       await submitPension(employeeId, pension);
+    },
+    contractSubmit: async (contract) => {
+      await contractSaver.flushNow();
+      await submitContract(employeeId, contract);
     },
   });
 }

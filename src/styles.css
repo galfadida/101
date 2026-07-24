@@ -138,6 +138,22 @@ input::placeholder{color:var(--muted)}
 .hint.approx{color:var(--gold);font-weight:600}
 .hl{color:var(--ok);font-weight:800}
 .pen-note{margin-top:16px}
+
+/* ---------- חוזה עבודה ---------- */
+.contract-doc{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:20px 18px;box-shadow:var(--shadow);max-height:52vh;overflow-y:auto;
+  line-height:1.7;font-size:15px}
+.contract-logo{display:block;width:88px;height:auto;margin:0 auto 6px}
+.contract-title{text-align:center;font-size:19px;font-weight:800;color:var(--brand);margin:0 0 14px}
+.contract-pre{margin:4px 0;color:var(--ink)}
+.contract-pre.strong{font-weight:700;margin-top:10px}
+.contract-h{font-size:16px;font-weight:800;color:var(--brand);margin:16px 0 6px;
+  border-bottom:1px solid var(--line);padding-bottom:4px}
+.contract-cl{margin:5px 0;text-align:justify}
+.contract-close{margin-top:16px;font-weight:600}
+.contract-sigrow{display:flex;gap:16px;margin-top:20px}
+.contract-sigcell{flex:1;text-align:center;border-top:1px solid var(--line-2);
+  padding-top:6px;color:var(--muted);font-weight:600}
 .seg{display:flex;gap:10px}
 .seg-btn{flex:1;padding:13px;border:1px solid var(--line-2);background:var(--surface);border-radius:11px;
   font:inherit;font-size:17px;color:var(--ink-2);cursor:pointer;transition:border-color .15s,background .15s}

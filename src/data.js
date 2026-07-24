@@ -149,6 +149,42 @@ export function makePensionSaver(employeeId, delay = 1200) {
   };
 }
 
+/* ---------- חוזה עבודה — נשמר בנפרד מטופס 101 ---------- */
+const CONTRACT_DOC = (employeeId) => doc(db, "employees", employeeId, "contract", "current");
+
+export async function loadContract(employeeId) {
+  const snap = await getDoc(CONTRACT_DOC(employeeId));
+  return snap.exists() ? snap.data() : null;
+}
+export async function saveContractDraft(employeeId, contract) {
+  await setDoc(
+    CONTRACT_DOC(employeeId),
+    { contract, status: "draft", updatedAt: serverTimestamp() },
+    { merge: true },
+  );
+}
+export async function submitContract(employeeId, contract) {
+  await setDoc(
+    CONTRACT_DOC(employeeId),
+    { contract, status: "submitted", submittedAt: serverTimestamp(), updatedAt: serverTimestamp() },
+    { merge: true },
+  );
+}
+export function makeContractSaver(employeeId, delay = 1200) {
+  let timer = null, pending = null, inFlight = false;
+  async function flush() {
+    if (!pending || inFlight) return;
+    const payload = pending; pending = null; inFlight = true;
+    try { await saveContractDraft(employeeId, payload); }
+    catch (e) { console.warn("contract draft save failed", e); }
+    finally { inFlight = false; if (pending) flush(); }
+  }
+  return {
+    queue(contract) { pending = contract; clearTimeout(timer); timer = setTimeout(flush, delay); },
+    flushNow() { clearTimeout(timer); return flush(); },
+  };
+}
+
 /** דיבאונס לשמירת טיוטה, כדי לא לכתוב על כל הקשה */
 export function makeDebouncedSaver(employeeId, delay = 1200) {
   let timer = null;

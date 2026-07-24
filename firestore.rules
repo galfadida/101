@@ -85,6 +85,19 @@ service cloud.firestore {
         && data.status in ['draft', 'submitted'];
     }
 
+    // רשימת השדות היחידים שמותר שיופיעו בנתוני חוזה העבודה.
+    function allowedContractKeys() {
+      return ['contractApproved', 'contractSignature', 'contractSignDate'];
+    }
+    function validContract(data) {
+      return data.keys().hasOnly(['contract', 'status', 'updatedAt', 'submittedAt'])
+        && data.contract is map
+        && data.contract.keys().hasOnly(allowedContractKeys())
+        && data.status in ['draft', 'submitted']
+        && (!('contractSignature' in data.contract) || data.contract.contractSignature is string)
+        && (!('contractSignature' in data.contract) || data.contract.contractSignature.size() < 400000);
+    }
+
     function validForm(data) {
       return data.keys().hasOnly(['answers', 'stepIndex', 'status', 'updatedAt', 'submittedAt'])
         && data.answers is map
@@ -190,6 +203,24 @@ service cloud.firestore {
             boundTo(employeeId)
             && resource.data.status != 'submitted'
             && validPension(request.resource.data)
+          );
+
+        allow delete: if isAdmin();
+      }
+
+      // ---------- חוזה עבודה — נשמר בנפרד מטופס 101 ----------
+      match /contract/{docId} {
+        allow get: if isAdmin() || boundTo(employeeId);
+        allow list: if isAdmin();
+
+        allow create: if isAdmin()
+          || (boundTo(employeeId) && validContract(request.resource.data));
+
+        allow update: if isAdmin()
+          || (
+            boundTo(employeeId)
+            && resource.data.status != 'submitted'
+            && validContract(request.resource.data)
           );
 
         allow delete: if isAdmin();
