@@ -2,6 +2,7 @@ import { ADDR_BLOB } from "./addr.js";
 import { LOGO } from "./logo.js";
 import { lookupZip } from "./geocode.js";
 import { BANKS, bankByCode, bankLabel, bankFromLabel, validate as validateBank } from "./bank.js";
+import { BRANCHES_BY_BANK } from "./branches.js";
 
 /* =========================================================
    פרטי העובד — מגיעים מ-employees/{id}/public/profile ב-Firestore.
@@ -138,6 +139,36 @@ function searchList(list, q, limit){
   }
   return starts.concat(inside).slice(0, limit);
 }
+/* ---------- סניפי בנק (קובץ בנק ישראל הרשמי) ---------- */
+function branchRows(bankCode){
+  var c = String(bankCode||"").replace(/\D/g,"");
+  return BRANCHES_BY_BANK[c] || BRANCHES_BY_BANK[String(Number(c))] || [];
+}
+function branchDisplays(bankCode){
+  return branchRows(bankCode).map(function(r){
+    return r[0]+" · "+r[1]+(r[2]?" · "+r[2]:"");
+  });
+}
+function branchLabel(bankCode, branchCode){
+  var bc = String(branchCode||"").replace(/\D/g,"");
+  var rows = branchRows(bankCode);
+  for(var i=0;i<rows.length;i++){
+    if(rows[i][0]===bc || String(Number(rows[i][0]))===String(Number(bc)))
+      return rows[i][0]+" · "+rows[i][1]+(rows[i][2]?" · "+rows[i][2]:"");
+  }
+  return bc;
+}
+function branchExists(bankCode, branchCode){
+  var bc = String(branchCode||"").replace(/\D/g,"");
+  if(!bc) return false;
+  var rows = branchRows(bankCode);
+  if(!rows.length) return true;               // בנק ללא נתוני סניפים — לא חוסמים
+  for(var i=0;i<rows.length;i++){
+    if(rows[i][0]===bc || Number(rows[i][0])===Number(bc)) return true;
+  }
+  return false;
+}
+
 function makeCombo(input, getList, onPick){
   var wrap = el("div","combo");
   input.autocomplete = "off";
@@ -316,8 +347,13 @@ var steps = [
     hint:"ברירת המחדל היא שמך — אפשר לשנות אם החשבון על שם מישהו אחר"},
    {k:"bankCode",l:"בנק",bank:true,v:function(x){return String(x||"").trim()?"":"נא לבחור בנק מהרשימה";},
     ph:"הקלדה לחיפוש בנק…"},
-   {k:"bankBranch",l:"מספר סניף",type:"text",mode:"numeric",max:3,half:true,ph:"3 ספרות",
-    v:function(x){return /^\d{3}$/.test(x)?"":"מספר הסניף חייב להיות 3 ספרות";}},
+   {k:"bankBranch",l:"סניף",branchCombo:true,half:true,ph:"מספר או שם הסניף",
+    hint:"מספר הסניף או שמו — מתוך רשימת הסניפים של הבנק",
+    v:function(){
+      if(!String(s.bankBranch||"").trim()) return "נא לבחור סניף";
+      if(!branchExists(s.bankCode, s.bankBranch)) return "לא נמצא סניף כזה בבנק שנבחר — בדקי את המספר או בחרי מהרשימה";
+      return "";
+    }},
    {k:"bankAccount",l:"מספר חשבון",type:"text",mode:"numeric",max:9,half:true,ph:"4 עד 9 ספרות",
     v:function(x){return /^\d{4,9}$/.test(x)?"":"מספר החשבון חייב להיות בין 4 ל-9 ספרות";}}
  ],
@@ -729,7 +765,31 @@ function mkField(f){
       function(){ return BANKS.map(function(b){ return b.code+" "+b.name; }); },
       function(v){
         var found = bankFromLabel(v);
-        s[f.k] = found ? found.code : "";
+        var newCode = found ? found.code : "";
+        if(newCode !== s[f.k]){
+          // החלפת בנק — מאפסים את הסניף כדי שלא יישאר סניף מבנק אחר
+          s.bankBranch = "";
+          var bi = document.getElementById("f_bankBranch");
+          if(bi) bi.value = "";
+        }
+        s[f.k] = newCode;
+        d.classList.remove("bad");
+        save();
+      }));
+    if(f.hint) d.appendChild(el("div","hint",f.hint));
+    d.appendChild(el("div","err",""));
+    return d;
+  }
+  if(f.branchCombo){
+    i.type = "text";
+    i.autocomplete = "off";
+    i.value = s.bankBranch ? branchLabel(s.bankCode, s.bankBranch) : "";
+    i.placeholder = f.ph || "מספר או שם הסניף";
+    d.appendChild(makeCombo(i,
+      function(){ return branchDisplays(s.bankCode); },
+      function(v){
+        var m = String(v).match(/(\d+)/);
+        s.bankBranch = m ? m[1] : "";
         d.classList.remove("bad");
         save();
       }));
