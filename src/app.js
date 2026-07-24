@@ -577,7 +577,7 @@ var steps = [
  choice:{k:"penContinue", opts:[{v:"yes",l:"כן"},{v:"no",l:"לא"}]}},
 
 // המשך=כן — העלאת מסמכים
-{sec:"פנסיה", q:function(){return "העלאת מסמכים"}, sub:"אישור קופה פעילה + טופס קוביות · קובץ PDF או תמונה",
+{sec:"פנסיה", q:function(){return "העלאת מסמכים"}, sub:"",
  when:function(){return pensionOn() && s.penActive==="yes" && s.penContinue==="yes"},
  penDocs:true}
 ];
@@ -1159,6 +1159,14 @@ function buildPenActive(host){
 
 /* ---------- מסך העלאת מסמכי פנסיה ---------- */
 function buildPenDocs(host){
+  var intro = el("div","notice info");
+  intro.innerHTML =
+    'כדי שנוכל להמשיך להפקיד לאותה קופה נצטרך את המסמכים הבאים:' +
+    '<br><b>אישור קופה פעילה</b> + <b>טופס "קוביות"</b> (יש להשיג אותו מהסוכן / חברת הביטוח שלכם).' +
+    '<br><br>אם אין ברשותכם את המסמכים — תוכלו לדלג כעת ולהשלים בהמשך, בחודש הראשון לעבודתכם.';
+  intro.style.marginBottom = "6px";
+  host.appendChild(intro);
+
   var box = el("div","fields");
   function draw(){
     box.innerHTML = "";
