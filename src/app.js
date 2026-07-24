@@ -1128,8 +1128,7 @@ function buildPenActive(host){
   var note = el("div","notice info pen-note");
   function updateNote(){
     if(s.penActive==="yes"){
-      note.innerHTML = "על פי המידע שמסרת, קיימת ברשותך קופה פנסיונית פעילה." +
-        '<br><br>בהתאם לחוק, ההפרשות הפנסיוניות יבוצעו לאחר <span class="hl">3 חודשי עבודה</span>, באופן רטרואקטיבי החל מיום תחילת עבודתך.';
+      note.innerHTML = 'בהתאם לחוק, ההפרשות הפנסיוניות יבוצעו לאחר <span class="hl">3 חודשי עבודה</span>, באופן רטרואקטיבי החל מיום תחילת עבודתך.';
       note.style.display = "";
     } else if(s.penActive==="no"){
       note.innerHTML = "על פי המידע שמסרת, אין ברשותך קופה פנסיונית פעילה (לא בוצעה אליה הפקדה במהלך 6 החודשים האחרונים)." +
