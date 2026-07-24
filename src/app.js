@@ -992,7 +992,11 @@ function buildFlags(host, flags){
 function buildNotice(host, n){
   var d = el("div","notice "+(n.kind||"info"));
   d.innerHTML = n.html();
-  d.querySelectorAll(".mail-copy").forEach(function(btn){
+  wireMailCopy(d);
+  host.appendChild(d);
+}
+function wireMailCopy(root){
+  root.querySelectorAll(".mail-copy").forEach(function(btn){
     btn.onclick = function(){
       var val = btn.getAttribute("data-copy");
       var done = function(){ btn.classList.add("copied"); btn.textContent="הועתק ✓";
@@ -1002,7 +1006,6 @@ function buildNotice(host, n){
       } else { fallbackCopy(val); done(); }
     };
   });
-  host.appendChild(d);
 }
 function fallbackCopy(val){
   try{
@@ -1403,7 +1406,9 @@ function renderDone(){
     var warn = el("div","notice warn");
     warn.innerHTML = "<b>חשוב לפעול בהקדם:</b> אין לך אישור תיאום מס. אם לא "+G("תעביר","תעבירי")+" אישור לפני המשכורת הראשונה שלך בשאול תמרוקים, "+
       "ינוכו לך <b>47% מס</b>. יש להסדיר תיאום מס ולשלוח אותו בהקדם לכתובת: " +
-      '<a class="mailto" href="mailto:'+HR_MAIL+'">'+HR_MAIL+"</a>";
+      '<span class="mail-wrap"><a class="mailto" href="mailto:'+HR_MAIL+'">'+HR_MAIL+'</a>' +
+      '<button type="button" class="mail-copy" data-copy="'+HR_MAIL+'" aria-label="העתקת כתובת המייל" title="העתקת המייל">📋</button></span>';
+    wireMailCopy(warn);
     w.appendChild(warn);
   }
 
