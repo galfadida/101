@@ -379,7 +379,7 @@ var steps = [
           v:function(x){return validIsraeliId(x)?"":"מספר תעודת זהות לא תקין — נסי לבדוק שוב"}}]},
 
 {sec:"פרטים אישיים", q:function(){return "מתי נולדת? 🎂"}, sub:"",
- fields:[{k:"birthDate",l:"תאריך לידה",type:"date",ph:"06/03/1989",v:function(x){
+ fields:[{k:"birthDate",l:"",type:"date",ph:"06/03/1989",v:function(x){
     if(!x) return "נא להקליד תאריך מלא בפורמט יום/חודש/שנה";
     var a = TAX_YEAR - Number(x.split("-")[0]);
     if(a<16) return "גיל מתחת ל-16 — נא לבדוק את התאריך";
@@ -392,7 +392,10 @@ var steps = [
 
 {sec:"פרטים אישיים", q:function(){return "מתי עלית ארצה?"}, sub:"",
  when:function(){return s.bornIsrael==="no"},
- fields:[{k:"aliyaDate",l:"תאריך עלייה",type:"date",v:req}]},
+ fields:[{k:"aliyaDate",l:"תאריך עלייה",type:"date",ph:"14/09/2010",v:req}]},
+
+{sec:"סטטוס", q:function(){return G("האם אתה תושב ישראל?","האם את תושבת ישראל?")}, sub:"",
+ choice:{k:"resident", opts:[{v:"yes",l:"כן"},{v:"no",l:"לא"}]}},
 
 {sec:"פרטים אישיים", q:function(){return G("היכן אתה גר?","היכן את גרה?")}, sub:"",
  fields:[{k:"city",l:"יישוב",combo:"city",v:req,ph:"הקלדה לחיפוש…",hint:"מתוך רשימת היישובים הרשמית"},
@@ -402,9 +405,6 @@ var steps = [
           hint:"נמלא אותו עבורך — אפשר לתקן",
           v:function(x){ return isDigits(x,7) ? "" : "מיקוד הוא 7 ספרות"; }}],
  after:wireZipLookup},
-
-{sec:"סטטוס", q:function(){return G("האם אתה תושב ישראל?","האם את תושבת ישראל?")}, sub:"",
- choice:{k:"resident", opts:[{v:"yes",l:"כן"},{v:"no",l:"לא"}]}},
 
 {sec:"סטטוס", q:function(){return G("האם אתה חבר בקיבוץ או במושב שיתופי?","האם את חברה בקיבוץ או במושב שיתופי?")}, sub:"",
  choice:{k:"kibbutz", opts:[
@@ -779,9 +779,11 @@ function mkField(f){
   var wrapCls = "field";
   var d = el("div",wrapCls);
   d.dataset.key = f.k;
-  var lab = el("label",null,f.l);
-  lab.htmlFor = "f_"+f.k;
-  d.appendChild(lab);
+  if(f.l){
+    var lab = el("label",null,f.l);
+    lab.htmlFor = "f_"+f.k;
+    d.appendChild(lab);
+  }
 
   if(f.type==="gender"){
     var seg = el("div","seg");
