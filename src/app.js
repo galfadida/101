@@ -565,39 +565,16 @@ var steps = [
    section: פנסיה — נפרד מטופס 101, מוצג רק לפי גיל וחוק
    זכר מגיל 21 / נקבה מגיל 20. הנתונים נשמרים בנפרד.
    ========================================================== */
+// שאלת קופה פעילה — הקוביה (על פי המידע שמסרת...) מוצגת inline באותו עמוד, בלי אישור
 {sec:"פנסיה", q:function(){return "האם קיימת לך קופה פנסיונית פעילה שבוצעה אליה הפקדה במהלך 6 החודשים האחרונים?"},
  sub:"קופה פעילה היא קופה שבוצעה אליה לפחות הפקדה אחת במהלך ששת החודשים האחרונים.",
  when:function(){return pensionOn()},
- choice:{k:"penActive", opts:[{v:"yes",l:"כן"},{v:"no",l:"לא"}]}},
+ penActive:true},
 
-// אין קופה פעילה — הודעה + אישור חובה
-{sec:"פנסיה", q:function(){return "אין קופה פנסיונית פעילה"}, sub:"",
- when:function(){return pensionOn() && s.penActive==="no"},
- notice:{kind:"info", html:function(){
-   return "על פי המידע שמסרת, אין ברשותך קופה פנסיונית פעילה (לא בוצעה אליה הפקדה במהלך 6 החודשים האחרונים)."+
-     "<br><br>בהתאם לחוק, ההפרשות הפנסיוניות יחלו לאחר 6 חודשי עבודה."; }},
- flags:[{k:"penNoActiveConfirm", l:G("אני מאשר שאין ברשותי קופה פנסיונית פעילה.","אני מאשרת שאין ברשותי קופה פנסיונית פעילה.")}],
- require:[{k:"penNoActiveConfirm", msg:"נא לסמן את תיבת האישור כדי להמשיך"}]},
-
-// קיימת קופה פעילה — הודעה + אישור חובה
-{sec:"פנסיה", q:function(){return "קיימת קופה פנסיונית פעילה"}, sub:"",
- when:function(){return pensionOn() && s.penActive==="yes"},
- notice:{kind:"info", html:function(){
-   return "על פי המידע שמסרת, קיימת ברשותך קופה פנסיונית פעילה."+
-     "<br><br>בהתאם לחוק, ההפרשות הפנסיוניות יבוצעו לאחר 3 חודשי עבודה, באופן רטרואקטיבי החל מיום תחילת עבודתך."; }},
- flags:[{k:"penActiveConfirm", l:G("אני מאשר כי בוצעה הפקדה לקופה הפנסיונית שלי במהלך 6 החודשים האחרונים.","אני מאשרת כי בוצעה הפקדה לקופה הפנסיונית שלי במהלך 6 החודשים האחרונים.")}],
- require:[{k:"penActiveConfirm", msg:"נא לסמן את תיבת האישור כדי להמשיך"}]},
-
-// המשך הפקדה לקופה הקיימת?
+// המשך הפקדה לקופה הקיימת? (רק אם קיימת קופה פעילה) — בלי אישור
 {sec:"פנסיה", q:function(){return "האם ברצונך להמשיך להפקיד לקופה הפנסיונית הקיימת שלך?"}, sub:"",
  when:function(){return pensionOn() && s.penActive==="yes"},
  choice:{k:"penContinue", opts:[{v:"yes",l:"כן"},{v:"no",l:"לא"}]}},
-
-// המשך=כן — אישור חובה
-{sec:"פנסיה", q:function(){return "אישור המשך הפקדה"}, sub:"",
- when:function(){return pensionOn() && s.penActive==="yes" && s.penContinue==="yes"},
- flags:[{k:"penContinueConfirm", l:G("אני מאשר שברצוני להמשיך להפקיד לקופה הפנסיונית הקיימת שלי.","אני מאשרת שברצוני להמשיך להפקיד לקופה הפנסיונית הקיימת שלי.")}],
- require:[{k:"penContinueConfirm", msg:"נא לסמן את תיבת האישור כדי להמשיך"}]},
 
 // המשך=כן — העלאת מסמכים
 {sec:"פנסיה", q:function(){return "העלאת מסמכים"}, sub:"אישור קופה פעילה + טופס קוביות · קובץ PDF או תמונה",
@@ -848,6 +825,7 @@ function renderStep(){
   if(st.upload)    buildUpload(body, st.upload);
   if(st.part8)     buildPart8(body);
   if(st.bankSummary) buildBankSummary(body);
+  if(st.penActive) buildPenActive(body);
   if(st.penDocs)   buildPenDocs(body);
   if(st.sign)      buildSign(body);
 
@@ -1134,6 +1112,45 @@ function buildUpload(host, u){
   d.appendChild(el("div","hint","צילום מהטלפון או קובץ PDF"));
   d.appendChild(el("div","err",""));
   host.appendChild(d);
+}
+
+/* ---------- שאלת קופה פעילה + קוביה inline ---------- */
+function buildPenActive(host){
+  // צביעת המילה "פעילה" בכותרת השאלה
+  var q = main.querySelector("h1.q");
+  if(q) q.innerHTML = 'האם קיימת לך קופה פנסיונית <span class="hl">פעילה</span> שבוצעה אליה הפקדה במהלך 6 החודשים האחרונים?';
+
+  var box = el("div","choices");
+  var note = el("div","notice info pen-note");
+  function updateNote(){
+    if(s.penActive==="yes"){
+      note.innerHTML = "על פי המידע שמסרת, קיימת ברשותך קופה פנסיונית פעילה." +
+        "<br><br>בהתאם לחוק, ההפרשות הפנסיוניות יבוצעו לאחר <b>3 חודשי עבודה</b>, באופן רטרואקטיבי החל מיום תחילת עבודתך.";
+      note.style.display = "";
+    } else if(s.penActive==="no"){
+      note.innerHTML = "על פי המידע שמסרת, אין ברשותך קופה פנסיונית פעילה (לא בוצעה אליה הפקדה במהלך 6 החודשים האחרונים)." +
+        "<br><br>בהתאם לחוק, ההפרשות הפנסיוניות יחלו לאחר <b>6 חודשי עבודה</b>.";
+      note.style.display = "";
+    } else {
+      note.style.display = "none";
+    }
+  }
+  [{v:"yes",l:"כן"},{v:"no",l:"לא"}].forEach(function(o){
+    var b = el("button","choice"); b.type="button"; b.setAttribute("role","radio");
+    b.setAttribute("aria-checked", s.penActive===o.v ? "true":"false");
+    b.appendChild(el("span","dot")); b.appendChild(el("span","txt",o.l));
+    b.onclick = function(){
+      s.penActive = o.v; save();
+      box.querySelectorAll(".choice").forEach(function(x){ x.setAttribute("aria-checked","false"); });
+      b.setAttribute("aria-checked","true");
+      updateNote();
+    };
+    box.appendChild(b);
+  });
+  host.appendChild(box);
+  host.appendChild(note);
+  updateNote();
+  host.appendChild(el("div","err",""));
 }
 
 /* ---------- מסך העלאת מסמכי פנסיה ---------- */
@@ -1490,6 +1507,7 @@ function collect(st){
     }
   }
   if(st.choice && !s[st.choice.k]) return stepError("נא לבחור אחת מהאפשרויות כדי להמשיך");
+  if(st.penActive && !s.penActive) return stepError("נא לבחור אחת מהאפשרויות כדי להמשיך");
   if(st.multi && s[st.multi.k].length===0) return stepError("נא לבחור לפחות אפשרות אחת כדי להמשיך");
   if(st.kids){
     if(!s.kids.length) return stepError("נא להוסיף ילד/ה, או לחזור אחורה ולסמן שאין ילדים");
