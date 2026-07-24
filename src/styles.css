@@ -227,19 +227,23 @@ input::placeholder{color:var(--muted)}
   color:var(--muted);font-size:14px;font-weight:700;display:grid;place-items:center;margin-top:1px;
   font-variant-numeric:tabular-nums}
 .legal .choice[aria-checked="true"] .num{background:var(--brand);color:#fff}
-.legal .choice.common{border-color:var(--common);background:var(--common-soft)}
+/* נפוצים: מסגרת בצבע אחר בלבד — הרקע זהה לרגיל */
+.legal .choice.common{border-color:var(--common)}
 .legal .choice.common .num{background:var(--common);color:#fff}
-.legal .choice.common[aria-checked="true"]{border-color:var(--common);background:var(--common-soft);
-  box-shadow:inset 0 0 0 1px var(--common)}
+.legal .choice.common[aria-checked="true"]{border-color:var(--common)}
 .legal .choice.common .dot{border-color:var(--common)}
-.legal .choice .tag{display:inline-block;margin-top:22px;font-size:13px;font-weight:700;letter-spacing:.05em;
-  color:var(--common);background:transparent;border:1px solid var(--common);border-radius:99px;padding:2px 10px}
-.legal .choice.locked{opacity:1;cursor:default;border-color:var(--brand);background:var(--brand-soft)}
+.legal .choice .tag{display:block;width:fit-content;margin-top:12px;font-size:13px;font-weight:700;
+  letter-spacing:.05em;color:var(--common);background:transparent;border:1px solid var(--common);
+  border-radius:99px;padding:2px 10px}
+/* האפשרות הראשונה — נבחרת אוטומטית, מוצגת באפור */
+.legal .choice.locked{opacity:1;cursor:default;border-color:var(--line-2);background:var(--surface-2)}
+.legal .choice.locked .num{background:var(--muted);color:#fff}
+.legal .choice.locked .txt small{color:var(--muted);font-weight:700}
 
 /* סעיפי הפטור: תיבה מלאה עם סימן וי לבן גדול וברור כשמסומן */
-.legal .choice[aria-checked="true"] .dot,
-.legal .choice.locked .dot{background:var(--brand);border-color:var(--brand)}
+.legal .choice[aria-checked="true"] .dot{background:var(--brand);border-color:var(--brand)}
 .legal .choice.common[aria-checked="true"] .dot{background:var(--common);border-color:var(--common)}
+.legal .choice.locked .dot{background:var(--muted);border-color:var(--muted)}
 .legal .choice[aria-checked="true"] .dot::after,
 .legal .choice.locked .dot::after{
   content:"";position:absolute;inset:auto;left:6px;top:2px;width:6px;height:11px;
@@ -271,10 +275,10 @@ input::placeholder{color:var(--muted)}
 .sigwrap.locked .siglock{display:flex}
 .declaration{background:var(--danger-soft);border:1px solid var(--danger);border-radius:12px;padding:16px;
   font-size:16px;line-height:1.6;color:var(--danger);font-weight:600}
-/* לפני סימון — אדום (דורש קריאה ואישור). אחרי סימון — ירוק (אושר). */
-.choice.decl-check{background:var(--danger-soft);border-color:var(--danger);align-items:flex-start;
-  color:var(--danger);font-weight:600;line-height:1.55;transition:background .15s,border-color .15s,color .15s}
-.choice.decl-check .dot{border-color:var(--danger);margin-top:3px}
+/* לפני סימון — שחור ניטרלי. אחרי סימון — ירוק (אושר). */
+.choice.decl-check{background:var(--surface);border-color:var(--line-2);align-items:flex-start;
+  color:var(--ink);font-weight:600;line-height:1.55;transition:background .15s,border-color .15s,color .15s}
+.choice.decl-check .dot{border-color:var(--line-2);margin-top:3px}
 .choice.decl-check[aria-checked="true"]{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
 .choice.decl-check[aria-checked="true"] .dot{background:var(--ok);border-color:var(--ok)}
 .choice.decl-check[aria-checked="true"] .dot::after{
@@ -301,6 +305,24 @@ input::placeholder{color:var(--muted)}
 .bank-sum-row b{font-weight:700;text-align:end;word-break:break-word}
 .choice.bank-decl{align-items:flex-start}
 .choice.bank-decl .dot{margin-top:3px}
+/* הצהרת הבנק: ניטרלי לפני סימון, ירוק (אושר) אחרי */
+.choice.bank-decl[aria-checked="true"]{border-color:var(--ok);background:var(--ok-soft);color:var(--ok)}
+.choice.bank-decl[aria-checked="true"] .dot{background:var(--ok);border-color:var(--ok)}
+.choice.bank-decl[aria-checked="true"] .dot::after{
+  content:"";position:absolute;inset:auto;left:6px;top:2px;width:6px;height:11px;
+  border:solid #fff;border-width:0 2.5px 2.5px 0;border-radius:0;background:none;transform:rotate(45deg)}
+
+/* מספרי הבנק — מודגשים */
+input.bank-num{font-weight:700;font-size:19px;letter-spacing:.06em;font-variant-numeric:tabular-nums}
+
+/* קישור עזרה: אישור ניהול חשבון — כרטיס נגיש מעל השדות */
+.bank-help-card{display:flex;align-items:center;gap:11px;width:100%;text-align:start;cursor:pointer;
+  background:var(--brand-soft);border:1px solid var(--line-2);border-radius:12px;
+  padding:13px 15px;margin-bottom:16px;font:inherit;font-size:15px;line-height:1.45;color:var(--ink-2)}
+.bank-help-card:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.bank-help-ic{flex:none;font-size:22px;line-height:1}
+.bank-help-txt b{color:var(--ink);font-weight:700}
+.bank-help-cta{color:var(--brand);font-weight:800;white-space:nowrap}
 
 /* ---------- done ---------- */
 .done{text-align:center;padding:20px 0}

@@ -328,7 +328,7 @@ var PART8 = [
             f:[{k:"days",l:"מספר ימי מילואים",type:"number"}]}
 ];
 
-var HMOS = ["כללית","מכבי","מאוחדת","לאומית"];
+var HMOS = ["מאוחדת","כללית","מכבי","לאומית"];
 var PAY_TYPES = ["משכורת חודש","משכורת בעד משרה נוספת","משכורת חלקית","שכר עבודה (עובד יומי)","קצבה","מלגה"];
 
 /* =========================================================
@@ -349,12 +349,10 @@ var steps = [
 {sec:"פרטי חשבון בנק", q:function(){return "לאיזה חשבון בנק להעביר את המשכורת? 💰"}, sub:"הפרטים ישמשו להעברת שכר בלבד",
  fields:[
    {k:"bankHolder",l:"שם בעל החשבון",type:"text",v:req,
-    prefill:function(){return (s.firstName+" "+s.lastName).trim();},
-    hint:"ברירת המחדל היא שמך — אפשר לשנות אם החשבון על שם מישהו אחר"},
+    prefill:function(){return (s.firstName+" "+s.lastName).trim();}},
    {k:"bankCode",l:"בנק",bank:true,v:function(x){return String(x||"").trim()?"":"נא לבחור בנק מהרשימה";},
     ph:"בחירת בנק מהרשימה"},
    {k:"bankBranch",l:"סניף",branchCombo:true,half:true,ph:"מספר או שם הסניף",
-    hint:"מתוך רשימת הסניפים של הבנק שנבחר",
     v:function(){
       if(!s.bankCode) return "נא לבחור בנק תחילה";
       if(!String(s.bankBranch||"").trim()) return "נא לבחור סניף";
@@ -372,11 +370,11 @@ var steps = [
  ],
  after:wireBankHelp},
 
-{sec:"פרטי חשבון בנק", q:function(){return "אישור פרטי החשבון"}, sub:"נא לוודא שהפרטים נכונים לפני המשך",
+{sec:"פרטי חשבון בנק", q:function(){return SEED.firstName+", "+G("אשר לנו שאלו הפרטים הנכונים","אשרי לנו שאלו הפרטים הנכונים")+" ✅"}, sub:"נא לוודא שהפרטים נכונים לפני המשך",
  when:function(){return !!(s.bankCode && s.bankBranch && s.bankAccount)},
  bankSummary:true},
 
-{sec:"פרטים אישיים", q:function(){return SEED.firstName+", "+G("הקלד","הקלידי")+" 9 ספרות של תעודת הזהות שלך כולל ספרת ביקורת 😊"}, sub:"",
+{sec:"פרטים אישיים", q:function(){return SEED.firstName+", מהי תעודת הזהות שלך? 😊"}, sub:"כולל ספרת ביקורת",
  fields:[{k:"idNum",l:"מספר תעודת זהות",type:"text",mode:"numeric",max:9,ph:"000000000",
           v:function(x){return validIsraeliId(x)?"":"מספר תעודת זהות לא תקין — נסי לבדוק שוב"}}]},
 
@@ -389,14 +387,14 @@ var steps = [
     return "";
   }}]},
 
-{sec:"פרטים אישיים", q:function(){return "נולדת בישראל?"}, sub:"",
+{sec:"פרטים אישיים", q:function(){return "האם נולדת בישראל?"}, sub:"",
  choice:{k:"bornIsrael", opts:[{v:"yes",l:"כן"},{v:"no",l:"לא, עליתי ארצה"}]}},
 
 {sec:"פרטים אישיים", q:function(){return "מתי עלית ארצה?"}, sub:"",
  when:function(){return s.bornIsrael==="no"},
  fields:[{k:"aliyaDate",l:"תאריך עלייה",type:"date",v:req}]},
 
-{sec:"פרטים אישיים", q:function(){return G("איפה אתה גר?","איפה את גרה?")}, sub:"",
+{sec:"פרטים אישיים", q:function(){return G("היכן אתה גר?","היכן את גרה?")}, sub:"",
  fields:[{k:"city",l:"יישוב",combo:"city",v:req,ph:"הקלדה לחיפוש…",hint:"מתוך רשימת היישובים הרשמית"},
          {k:"street",l:"רחוב",combo:"street",v:req,grow:true,ph:"הקלדה לחיפוש…"},
          {k:"houseNo",l:"מספר",type:"text",mode:"numeric",v:req,narrow:true},
@@ -408,7 +406,7 @@ var steps = [
 {sec:"סטטוס", q:function(){return G("אתה תושב ישראל?","את תושבת ישראל?")}, sub:"",
  choice:{k:"resident", opts:[{v:"yes",l:"כן"},{v:"no",l:"לא"}]}},
 
-{sec:"סטטוס", q:function(){return G("אתה חבר בקיבוץ או במושב שיתופי?","את חברה בקיבוץ או במושב שיתופי?")}, sub:"",
+{sec:"סטטוס", q:function(){return G("האם אתה חבר בקיבוץ או במושב שיתופי?","האם את חברה בקיבוץ או במושב שיתופי?")}, sub:"",
  choice:{k:"kibbutz", opts:[
    {v:"no",l:"לא"},
    {v:"transferred",l:"כן, הכנסותיי ממעסיק זה מועברות לקיבוץ"},
@@ -460,7 +458,7 @@ var steps = [
    {v:"none",l:"לא משולמים מזונות"}]}},
 
 /* ---------- section: children ---------- */
-{sec:"ילדים", q:function(){return "יש לך ילדים שטרם מלאו להם 19?"}, sub:"נכון לשנת המס "+TAX_YEAR,
+{sec:"ילדים", q:function(){return "יש לך ילדים שטרם מלאו להם 19?"}, sub:"",
  choice:{k:"hasKids", opts:[{v:"yes",l:"כן"},{v:"no",l:"לא"}]}},
 
 {sec:"ילדים", q:function(){return "פרטי הילדים"}, sub:"אפשר להוסיף כמה שצריך",
@@ -471,7 +469,7 @@ var steps = [
  choice:{k:"payType", opts:PAY_TYPES.map(function(p){return {v:p,l:p}})}},
 
 /* ---------- section: other income ---------- */
-{sec:"הכנסות אחרות", q:function(){return "יש לך הכנסות נוספות?"}, sub:"משכורת ממקום אחר, עסק, קצבה, מלגה וכדומה",
+{sec:"הכנסות אחרות", q:function(){return "האם יש לך הכנסות נוספות?"}, sub:"משכורת ממקום אחר, עסק, קצבה, מלגה וכדומה",
  choice:{k:"otherIncome", opts:[
    {v:"no",l:"אין לי הכנסות אחרות",note:"לא ממשכורת, לא מעסק, לא מקצבה ולא ממלגה"},
    {v:"yes",l:"יש לי הכנסות אחרות"}]}},
@@ -519,7 +517,7 @@ var steps = [
  upload:{k:"coordFile", l:"צירוף אישור תיאום מס", optional:true}},
 
 /* ---------- section: part 8 ---------- */
-{sec:"פטור וזיכוי ממס", q:function(){return G("אני מבקש פטור או זיכוי ממס מהסיבות הבאות","אני מבקשת פטור או זיכוי ממס מהסיבות הבאות")},
+{sec:"פטור וזיכוי ממס", q:function(){return G("אני מבקש פטור או זיכוי ממס מהסיבות הבאות:","אני מבקשת פטור או זיכוי ממס מהסיבות הבאות:")},
  sub:"סמני כל סעיף שנכון לגבייך. הנוסח מופיע כלשונו בטופס הרשמי.", part8:true},
 
 /* ---------- section: signature ---------- */
@@ -605,7 +603,7 @@ function buildBankSummary(host){
   db.setAttribute("role","checkbox"); db.setAttribute("aria-checked", s.bankConfirm?"true":"false");
   db.appendChild(el("span","dot"));
   db.appendChild(el("span","txt",
-    "אני מצהיר/ה כי בדקתי את פרטי הבנק, הסניף ומספר החשבון שהזנתי, וכי אלה הפרטים שאליהם אבקש להעביר את משכורתי. ידוע לי כי האחריות לנכונות הפרטים שהוזנו חלה עליי."));
+    "אני "+G("מצהיר","מצהירה")+" כי בדקתי את פרטי הבנק, הסניף ומספר החשבון שהזנתי, וכי אלה הפרטים שאליהם אבקש להעביר את משכורתי. ידוע לי כי האחריות לנכונות הפרטים שהוזנו חלה עליי."));
   db.onclick = function(){
     s.bankConfirm = !s.bankConfirm;
     db.setAttribute("aria-checked", s.bankConfirm?"true":"false");
@@ -617,10 +615,14 @@ function buildBankSummary(host){
 }
 
 function wireBankHelp(wrap){
-  var help = el("button","bank-help-link","איך מפיקים אישור ניהול חשבון?");
-  help.type = "button";
-  help.onclick = openAccountCertHelp;
-  wrap.appendChild(help);
+  var card = el("button","bank-help-card"); card.type = "button";
+  card.innerHTML =
+    '<span class="bank-help-ic">📄</span>'+
+    '<span class="bank-help-txt">לא בטוחים בפרטי החשבון? עדיף להוציא <b>אישור ניהול חשבון</b>'+
+    ' — <span class="bank-help-cta">למדריך לחצו כאן »</span></span>';
+  card.onclick = openAccountCertHelp;
+  var body = wrap.querySelector(".fields");
+  if(body) wrap.insertBefore(card, body); else wrap.appendChild(card);
 }
 function openAccountCertHelp(){
   var ov = el("div","modal-overlay");
@@ -850,6 +852,7 @@ function mkField(f){
   if(f.account){
     // מספר חשבון: ספרות בלבד, ללא הדבקה וללא גרירה. נשמר כמחרוזת, אפסים מובילים נשמרים.
     i.type = "text";
+    i.classList.add("bank-num");
     i.inputMode = "numeric";
     i.autocomplete = "off";
     i.setAttribute("autocorrect","off");
@@ -1010,7 +1013,7 @@ function buildUpload(host, u){
 /* ---------- children repeater ---------- */
 function buildKids(host){
   var list = el("div","fields");
-  if(!s.kids.length){ s.kids.push({name:"",id:"",birth:"",custody:"yes",allowance:"yes"}); save(); }
+  if(!s.kids.length){ s.kids.push({name:"",id:"",birth:"",custody:"",allowance:""}); save(); }
   function draw(){
     list.innerHTML="";
     if(!s.kids.length) list.appendChild(el("div","empty","עוד לא הוספת ילדים"));
@@ -1034,7 +1037,7 @@ function buildKids(host){
       list.appendChild(c);
     });
     var add = el("button","add-btn","+ הוספת ילד/ה"); add.type="button";
-    add.onclick = function(){ s.kids.push({name:"",id:"",birth:"",custody:"yes",allowance:"yes"}); save(); draw(); };
+    add.onclick = function(){ s.kids.push({name:"",id:"",birth:"",custody:"",allowance:""}); save(); draw(); };
     list.appendChild(add);
   }
   draw();
@@ -1138,7 +1141,7 @@ function buildPart8(host){
     b.appendChild(el("span","num",item.n));
     var txt = el("span","txt");
     txt.appendChild(document.createTextNode(item.t));
-    if(item.locked) txt.appendChild(el("small",null,"מסומן עבורך — רלוונטי כמעט לכולם"));
+    if(item.locked) txt.appendChild(el("small",null,"נבחר אוטומטית"));
     if(item.common) txt.appendChild(el("small","tag","נפוץ"));
     b.appendChild(txt);
     var sub = null;
@@ -1377,6 +1380,13 @@ function renderDone(){
     w.appendChild(warn);
   }
 
+  var pdfActions = el("div","nav");
+  var dl = el("button","btn btn-soft","הורדת הטופס");
+  dl.type="button";
+  dl.onclick = function(){ downloadPdf(dl); };
+  pdfActions.appendChild(dl);
+  w.appendChild(pdfActions);
+
   // הכפתור הראשי — מוביל לשלב הבא: חתימה על חוזה עבודה
   var contractWrap = el("div","nav");
   var contract = el("button","btn btn-primary btn-next","חתימה על חוזה עבודה ✍️");
@@ -1384,13 +1394,6 @@ function renderDone(){
   contract.onclick = function(){ goToContract(w); };
   contractWrap.appendChild(contract);
   w.appendChild(contractWrap);
-
-  var pdfActions = el("div","nav");
-  var dl = el("button","btn btn-soft","הורדת הטופס");
-  dl.type="button";
-  dl.onclick = function(){ downloadPdf(dl); };
-  pdfActions.appendChild(dl);
-  w.appendChild(pdfActions);
 
   main.appendChild(w);
   setTimeout(fireConfetti, 220);
