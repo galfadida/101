@@ -343,7 +343,7 @@ var steps = [
          {k:"mobile",l:"טלפון נייד",type:"tel",mode:"tel",v:function(x){return validMobile(x)?"":"מספר נייד לא תקין (05X-XXXXXXX)"}},
          {k:"gender",l:"מגדר",type:"gender"}]},
 
-{sec:"פרטים אישיים", q:function(){return "מה כתובת הדוא\"ל שלך? ✉️"}, sub:"לכתובת הזאת יישלחו תלושי השכר שלך",
+{sec:"פרטים אישיים", q:function(){return "מהי כתובת הדוא\"ל שלך? ✉️"}, sub:"לכתובת הזאת יישלחו תלושי השכר שלך",
  fields:[{k:"email",l:"כתובת דואר אלקטרוני",type:"email",mode:"email",v:function(x){return validEmail(x)?"":"כתובת אימייל לא תקינה"}}]},
 
 {sec:"פרטי חשבון בנק", q:function(){return "לאיזה חשבון בנק להעביר את המשכורת? 💰"}, sub:"הפרטים ישמשו להעברת שכר בלבד",
