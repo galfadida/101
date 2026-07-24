@@ -370,7 +370,7 @@ var steps = [
  ],
  after:wireBankHelp},
 
-{sec:"פרטי חשבון בנק", q:function(){return SEED.firstName+", "+G("אשר לנו שאלו הפרטים הנכונים","אשרי לנו שאלו הפרטים הנכונים")+" ✅"}, sub:"נא לוודא שהפרטים נכונים לפני המשך",
+{sec:"פרטי חשבון בנק", q:function(){return SEED.firstName+", "+G("אשר לנו שאלו הפרטים הנכונים","אשרי לנו שאלו הפרטים הנכונים")+" ✅"}, sub:"",
  when:function(){return !!(s.bankCode && s.bankBranch && s.bankAccount)},
  bankSummary:true},
 
