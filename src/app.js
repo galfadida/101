@@ -499,7 +499,8 @@ var steps = [
    return "מכיוון שיש לך הכנסה נוספת ואין אישור תיאום מס, "+
      "<b>אם לא יסופק אישור תיאום מס עד המשכורת הקרובה — יירדו 47% מס מהמשכורת</b>."+
      '<br><br>מומלץ להסדיר תיאום מס בהקדם ולשלוח אותו לכתובת: ' +
-     '<a class="mailto" style="white-space:nowrap" href="mailto:'+HR_MAIL+'">'+HR_MAIL+"</a>"; }}},
+     '<span class="mail-wrap"><a class="mailto" href="mailto:'+HR_MAIL+'">'+HR_MAIL+'</a>' +
+     '<button type="button" class="mail-copy" data-copy="'+HR_MAIL+'" aria-label="העתקת כתובת המייל" title="העתקת המייל">📋</button></span>'; }}},
 
 {sec:"תיאום מס", q:function(){return "מהן הסיבות לבקשת תיאום מס?"}, sub:"",
  when:function(){return s.otherIncome==="yes" && s.taxCoord==="yes"},
@@ -991,7 +992,24 @@ function buildFlags(host, flags){
 function buildNotice(host, n){
   var d = el("div","notice "+(n.kind||"info"));
   d.innerHTML = n.html();
+  d.querySelectorAll(".mail-copy").forEach(function(btn){
+    btn.onclick = function(){
+      var val = btn.getAttribute("data-copy");
+      var done = function(){ btn.classList.add("copied"); btn.textContent="הועתק ✓";
+        setTimeout(function(){ btn.classList.remove("copied"); btn.textContent="📋"; }, 1600); };
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(val).then(done).catch(function(){ fallbackCopy(val); done(); });
+      } else { fallbackCopy(val); done(); }
+    };
+  });
   host.appendChild(d);
+}
+function fallbackCopy(val){
+  try{
+    var t=document.createElement("textarea"); t.value=val;
+    t.style.position="fixed"; t.style.opacity="0"; document.body.appendChild(t);
+    t.focus(); t.select(); document.execCommand("copy"); t.remove();
+  }catch(e){}
 }
 
 function buildUpload(host, u){
