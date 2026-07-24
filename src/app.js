@@ -1714,6 +1714,16 @@ function renderDone(){
     w.appendChild(penActions);
   }
 
+  // חוזה עבודה חתום
+  if(s.contractSignature){
+    var conActions = el("div","nav nav-center");
+    var conDl = el("button","btn btn-soft","הורדת חוזה עבודה");
+    conDl.type="button";
+    conDl.onclick = function(){ downloadContractPdf(conDl); };
+    conActions.appendChild(conDl);
+    w.appendChild(conActions);
+  }
+
   main.appendChild(w);
   setTimeout(fireConfetti, 220);
 }
@@ -1845,6 +1855,26 @@ function downloadPensionPdf(btn){
       var url = URL.createObjectURL(blob);
       var a = document.createElement("a");
       a.href = url; a.download = "מסמך_פנסיה_"+s.firstName+"_"+s.lastName+".pdf";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+    });
+  });
+}
+
+function downloadContractPdf(btn){
+  return withBusy(btn, "מכינים…", function(){
+    return import("./contract-pdf.js").then(function(mod){
+      return mod.contractPdfBlob({
+        empName: (s.firstName+" "+s.lastName).trim(), empId: s.idNum,
+        empAddr: ((s.street||"")+" "+(s.houseNo||"")).trim() + (s.city ? ", "+s.city : ""),
+        startDate: fmtDate(s.startDate), wage: SEED.hourlyWage, role: SEED.role,
+        today: fmtDate(new Date().toISOString().slice(0,10)), year: new Date().getFullYear(),
+        signature: s.contractSignature,
+      });
+    }).then(function(blob){
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url; a.download = "חוזה_עבודה_"+s.firstName+"_"+s.lastName+".pdf";
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
     });
