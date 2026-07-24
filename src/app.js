@@ -403,7 +403,7 @@ var steps = [
           v:function(x){ return isDigits(x,7) ? "" : "מיקוד הוא 7 ספרות"; }}],
  after:wireZipLookup},
 
-{sec:"סטטוס", q:function(){return G("אתה תושב ישראל?","את תושבת ישראל?")}, sub:"",
+{sec:"סטטוס", q:function(){return G("האם אתה תושב ישראל?","האם את תושבת ישראל?")}, sub:"",
  choice:{k:"resident", opts:[{v:"yes",l:"כן"},{v:"no",l:"לא"}]}},
 
 {sec:"סטטוס", q:function(){return G("האם אתה חבר בקיבוץ או במושב שיתופי?","האם את חברה בקיבוץ או במושב שיתופי?")}, sub:"",
@@ -416,7 +416,7 @@ var steps = [
  choice:{k:"hmo", opts:HMOS.map(function(h){return {v:h,l:h}}).concat([{v:"none",l:G("לא רשום בקופה","לא רשומה בקופה")}])}},
 
 /* ---------- section: family ---------- */
-{sec:"מצב משפחתי", q:function(){return "מה המצב המשפחתי שלך?"}, sub:"",
+{sec:"מצב משפחתי", q:function(){return "מהו המצב המשפחתי שלך?"}, sub:"",
  choice:{k:"marital", opts:[
    {v:"single",l:G("רווק","רווקה")},
    {v:"married",l:G("נשוי","נשואה")},
